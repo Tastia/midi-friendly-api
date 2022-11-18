@@ -1,19 +1,6 @@
 # compiled output
 /dist
 /node_modules
-node_modules/
-/emails/build_production/
-.eslintcache
-
-.migrate
-
-swagger-spec.json
-
-# local development launcher
-dev
-
-#env
-.env
 
 # Logs
 logs
