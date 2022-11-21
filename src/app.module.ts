@@ -8,6 +8,7 @@ import { UserModule } from '@modules/user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ServicesModule } from './modules/services/services.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { MailerModule } from './modules/mailer/mailer.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AuthModule } from './modules/auth/auth.module';
     LunchGroupModule,
     ServicesModule,
     AuthModule,
+    MailerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
