@@ -36,3 +36,5 @@ lerna-debug.log*
 
 # ENV & CONFIG
 .env
+dump.rdb
+swagger-spec.json
