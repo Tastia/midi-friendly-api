@@ -1,7 +1,5 @@
-import { ApiProperty, ApiPropertyOptional, PickType } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Assessment } from '@schemas/assesment.schema';
-import { BlankAssessment } from '@schemas/blank-assesment.schema';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsNotEmpty } from 'class-validator';
 
 export class BooleanOperationResult {
   @ApiProperty({ example: 'true' })
