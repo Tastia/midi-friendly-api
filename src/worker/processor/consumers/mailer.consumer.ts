@@ -29,27 +29,27 @@ export class MailerConsumer {
   @OnQueueActive()
   onActive(job: Job) {
     Logger.debug(
-      `Processing job ${job.id} of type MapsConsumer. Data: ${JSON.stringify(job.data)}`,
+      `Processing job ${job.id} of type MailConsumer. Data: ${JSON.stringify(job.data)}`,
     );
   }
 
   @OnQueueCompleted()
   onComplete(job: Job, result: any) {
-    Logger.debug(`Completed job ${job.id} of type MapsConsumer. Result: ${JSON.stringify(result)}`);
+    Logger.debug(`Completed job ${job.id} of type MailConsumer. Result: ${JSON.stringify(result)}`);
   }
 
   @OnQueueFailed()
   onError(job: Job<any>, error: any) {
-    Logger.error(`Failed job ${job.id} of type MapsConsumer: ${error.message}`, error.stack);
+    Logger.error(`Failed job ${job.id} of type MailConsumer: ${error.message}`, error.stack);
   }
 
   @OnGlobalQueuePaused()
   onGlobalPaused() {
-    Logger.debug('Queue paused (global) [MapsConsumer]');
+    Logger.debug('Queue paused (global) [MailConsumer]');
   }
 
   @OnGlobalQueueResumed()
   onGlobalResumed(job: Job<any>) {
-    Logger.debug('Queue resumed (global)  [MapsConsumer]');
+    Logger.debug('Queue resumed (global)  [MailConsumer]');
   }
 }
