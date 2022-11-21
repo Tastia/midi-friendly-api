@@ -1,3 +1,4 @@
+import { QueueJobModule } from './../queue-job/queue-job.module';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BullModule } from '@nestjs/bull';
@@ -9,6 +10,7 @@ import { QueueController } from './queue.controller';
   imports: [
     MongooseModule.forFeature([], 'mongo'),
     BullModule.registerQueue({ name: Queues.MapsQueue }, { name: Queues.MailQueue }),
+    QueueJobModule,
   ],
   providers: [QueueService],
   controllers: [QueueController],

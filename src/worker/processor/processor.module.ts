@@ -1,3 +1,5 @@
+import { RestaurantModule } from '@modules/restaurant/restaurant.module';
+import { OrganizationModule } from '@modules/organization/organization.module';
 import { Restaurant, RestaurantSchema } from '@schemas/restaurant.schema';
 import { ServicesModule } from '@modules/services/services.module';
 import { MapsConsumer } from './consumers/maps.consumer';
@@ -16,6 +18,8 @@ import { User, UserSchema } from '@schemas/user.schema';
     ]),
     BullModule.registerQueue({ name: Queues.MapsQueue }, { name: Queues.MailQueue }),
     ServicesModule,
+    OrganizationModule,
+    RestaurantModule,
   ],
   providers: [MailerConsumer, MapsConsumer],
   exports: [MailerConsumer, MapsConsumer],

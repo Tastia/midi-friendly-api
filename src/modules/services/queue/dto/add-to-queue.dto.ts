@@ -1,7 +1,19 @@
 import { IsId } from '@common/decorators/is-mongoose-id.decorator';
-import { IsBoolean, IsEnum, IsNotEmpty, IsObject } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Queues } from '@common/types/queue.type';
+
+class QueueJobData {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  operation: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsObject()
+  params: Record<string, any>;
+}
 
 export class AddToQueueDto {
   @ApiProperty({
@@ -16,5 +28,5 @@ export class AddToQueueDto {
   @ApiProperty({
     description: 'Data to add to queue',
   })
-  readonly queueParams: { [key: string]: any };
+  readonly jobData: QueueJobData;
 }

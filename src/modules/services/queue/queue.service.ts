@@ -5,12 +5,14 @@ import { InjectQueue } from '@nestjs/bull';
 import { QueueStatusDto } from './dto/queue-status.dto';
 import { AddToQueueDto } from './dto/add-to-queue.dto';
 import { BooleanOperationResult } from '@shared/dto/boolean-operation-result.dto';
+import { QueueJobService } from '../queue-job/queue-job.service';
 
 @Injectable()
 export class QueueService {
   constructor(
     @InjectQueue(Queues.MapsQueue) private mapsQueue: Queue,
     @InjectQueue(Queues.MailQueue) private mailQueue: Queue,
+    private readonly queueJobService: QueueJobService,
   ) {}
 
   /**
@@ -74,13 +76,19 @@ export class QueueService {
    * @param data
    */
   async add(data: AddToQueueDto) {
-    const { queueName, queueParams } = data;
+    const { queueName, jobData } = data;
     const queue = await this.getQueue(queueName);
     if (!queue) throw new BadRequestException('Unknown queue ' + queueName);
 
+    const queueJob = await this.queueJobService.createQueueJob({
+      queue: queueName,
+      operation: jobData.operation,
+      params: jobData.params,
+    });
+
     // VALIDATE PAYLOAD, INJECT IT PROPERLY
 
-    const param = { ...queueParams };
+    const param = { ...jobData, operationId: queueJob._id.toString() };
     return queue.add(param) as unknown as Promise<BooleanOperationResult>;
   }
 }

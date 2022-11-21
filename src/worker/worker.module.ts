@@ -13,6 +13,7 @@ import { awsHandlerConfig } from '@modules/services/aws/aws.config';
 import { ProcessorModule } from './processor/processor.module';
 import { WorkerService } from './worker.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RestaurantModule } from '@modules/restaurant/restaurant.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AwsSdkModule.forRootAsync(awsHandlerConfig()),
     ProcessorModule,
     QueueModule,
+    RestaurantModule,
   ],
   providers: [WorkerService],
 })
