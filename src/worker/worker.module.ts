@@ -21,8 +21,13 @@ import { ScheduleModule } from '@nestjs/schedule';
       isGlobal: true,
       load: [appConfig, awsConfig, bullConfig, workerConfig],
     }),
-    MongooseModule.forRoot(appConfig().database.url, {
-      connectionName: 'mongo',
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('app.database.url'),
+        useNewUrlParser: true,
+      }),
+      inject: [ConfigService],
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
