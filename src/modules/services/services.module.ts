@@ -5,6 +5,6 @@ import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [GoogleMapsModule, AwsModule, QueueModule],
-  exports: [GoogleMapsModule],
+  exports: [GoogleMapsModule, AwsModule, QueueModule],
 })
 export class ServicesModule {}

@@ -1,8 +1,8 @@
 {
-  "name": "server-v2-debug",
+  "name": "midi-friendly-api",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "API / Worker services manager powering all Midi friendly client services",
+  "author": "Cyprien THAO",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -20,7 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "worker:start": "nest start --watch --config nest-cli-worker.json",
-    "worker:prod": "node dist/src/worker/worker"
+    "worker:prod": "node dist/worker/worker"
   },
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.3.16",
