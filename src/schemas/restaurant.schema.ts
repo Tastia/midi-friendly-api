@@ -1,9 +1,11 @@
-import { Coordinates } from './../common/types/address';
+import { RestaurantReviews } from '@common/types/restaurant';
+import { Coordinates } from '@common/types/address';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
 import { Transform } from 'class-transformer';
 import { Address } from '@common/types/address';
 import { Organization } from './oraganization.schema';
+import { RestaurantPhotos } from '@common/types/restaurant';
 
 export type RestaurantDocument = Restaurant & Document;
 
@@ -15,14 +17,26 @@ export class Restaurant {
   @Prop()
   name: string;
 
-  @Prop({ type: Address })
-  address: Address;
-
   @Prop({ type: Coordinates })
   coordinates: Coordinates;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Organization' })
   organization: Organization;
+
+  @Prop([{ type: RestaurantPhotos }])
+  photos: RestaurantPhotos[];
+
+  @Prop()
+  priceLevel: number;
+
+  @Prop({ type: Address })
+  address?: Address;
+
+  @Prop()
+  openingHours: string[];
+
+  @Prop({ type: RestaurantReviews })
+  reviews: RestaurantReviews;
 }
 
 export const RestaurantSchema = SchemaFactory.createForClass(Restaurant);

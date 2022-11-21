@@ -1,3 +1,4 @@
+import { QueueModule } from '@modules/services/queue/queue.module';
 import { RestaurantModule } from '@modules/restaurant/restaurant.module';
 import { OrganizationModule } from '@modules/organization/organization.module';
 import { Restaurant, RestaurantSchema } from '@schemas/restaurant.schema';
@@ -20,6 +21,7 @@ import { User, UserSchema } from '@schemas/user.schema';
     ServicesModule,
     OrganizationModule,
     RestaurantModule,
+    QueueModule,
   ],
   providers: [MailerConsumer, MapsConsumer],
   exports: [MailerConsumer, MapsConsumer],
