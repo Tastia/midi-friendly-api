@@ -18,6 +18,13 @@ export class RestaurantService {
           pageId: restaurant.placeId,
           coordinates: restaurant.coordinates,
           organization: new Types.ObjectId(organizationId),
+          photos: restaurant.photos,
+          priceLevel: restaurant.priceLevel,
+          reviews: {
+            google: restaurant.gMapsReviews,
+            internal: [],
+          },
+          openingHours: restaurant.openingHours,
         }),
       ),
     );
