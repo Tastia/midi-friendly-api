@@ -74,12 +74,13 @@ export class QueueService {
    * @param data
    */
   async add(data: AddToQueueDto) {
-    const queue = await this.getQueue(data.queueName);
-    if (!queue) throw new BadRequestException('Unknown queue ' + data.queueName);
+    const { queueName, queueParams } = data;
+    const queue = await this.getQueue(queueName);
+    if (!queue) throw new BadRequestException('Unknown queue ' + queueName);
 
     // VALIDATE PAYLOAD, INJECT IT PROPERLY
 
-    const param = {};
+    const param = { ...queueParams };
     return queue.add(param) as unknown as Promise<BooleanOperationResult>;
   }
 }

@@ -36,7 +36,7 @@ OrganizationSchema.virtual('lunchGroups', {
 });
 
 OrganizationSchema.virtual('restaurants', {
-  ref: Restaurant.name,
+  ref: 'Restaurant',
   localField: '_id',
   foreignField: 'organization',
 });
