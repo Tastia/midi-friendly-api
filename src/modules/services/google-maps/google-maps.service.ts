@@ -1,5 +1,5 @@
-import { BaseRestaurant } from './../../../common/types/restaurant';
-import { Coordinates } from './../../../common/types/address';
+import { BaseRestaurant } from '@common/types/restaurant';
+import { Coordinates } from '@common/types/address';
 import { Address } from '@common/types/address';
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { Client, defaultAxiosInstance } from '@googlemaps/google-maps-services-js';
@@ -26,8 +26,13 @@ export class GoogleMapsService {
         longitude: coordinates.lng,
       };
     } catch (err) {
-      Logger.debug(err, 'GoogleMapsService.getCoordinatesFromAddress');
-      throw new BadRequestException('Invalid address');
+      Logger.error(
+        err?.response?.data?.error_message ?? err,
+        'GoogleMapsService.getCoordinatesFromAddress',
+      );
+      throw new BadRequestException(
+        err?.response?.data?.error_message ?? 'Unexpected GMAPS unknown error',
+      );
     }
   }
 
@@ -48,8 +53,13 @@ export class GoogleMapsService {
         country: data.data.results?.[0]?.address_components?.[5]?.long_name ?? null,
       };
     } catch (err) {
-      Logger.debug(err, 'GoogleMapsService.getAddressFromCoordinates');
-      throw new BadRequestException('Invalid coordinates');
+      Logger.error(
+        err?.response?.data?.error_message ?? err,
+        'GoogleMapsService.getAddressFromCoordinates',
+      );
+      throw new BadRequestException(
+        err?.response?.data?.error_message ?? 'Unexpected GMAPS unknown error',
+      );
     }
   }
 
@@ -74,8 +84,13 @@ export class GoogleMapsService {
         },
       }));
     } catch (err) {
-      Logger.debug(err, 'GoogleMapsService.getRestaurantsNearby');
-      throw new BadRequestException('Invalid coordinates');
+      Logger.debug(
+        err?.response?.data?.error_message ?? err,
+        'GoogleMapsService.getRestaurantsNearby',
+      );
+      throw new BadRequestException(
+        err?.response?.data?.error_message ?? 'Unexpected GMAPS unknown error',
+      );
     }
   }
 }
