@@ -3,13 +3,17 @@ import { Coordinates } from '@common/types/address';
 import { Address } from '@common/types/address';
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { Client, Place } from '@googlemaps/google-maps-services-js';
-import { TaskOptions } from 'p-queue/dist/options';
+import { ExceptionHandler } from 'winston';
 
 @Injectable()
 export class GoogleMapsService {
   private readonly GMapsClient = new Client({});
 
   async getCoordinatesFromAddress(address: Address) {
+    Logger.debug(
+      `Retriving coordinates for address : ${JSON.stringify(address)}`,
+      'GoogleMapsService.getCoordinatesFromAddress',
+    );
     try {
       const data = await this.GMapsClient.geocode({
         params: {
@@ -38,6 +42,10 @@ export class GoogleMapsService {
   }
 
   async getAddressFromCoordinates(coordinates: Coordinates): Promise<Address> {
+    Logger.debug(
+      `Retriving address for coordinates : ${JSON.stringify(coordinates)}`,
+      'GoogleMapsService.getAddressFromCoordinates',
+    );
     try {
       const data = await this.GMapsClient.reverseGeocode({
         params: {
@@ -103,10 +111,10 @@ export class GoogleMapsService {
         name: restaurantDetails.name,
         placeId: restaurantDetails.place_id,
         address: {
-          street: restaurantDetails?.address_components?.[0]?.long_name ?? null,
-          city: restaurantDetails?.address_components?.[1]?.long_name ?? null,
-          zip: restaurantDetails?.address_components?.[6]?.long_name ?? null,
-          country: restaurantDetails?.address_components?.[5]?.long_name ?? null,
+          street: restaurantDetails?.address_components?.[0]?.long_name ?? '',
+          city: restaurantDetails?.address_components?.[1]?.long_name ?? '',
+          zip: restaurantDetails?.address_components?.[6]?.long_name ?? '',
+          country: restaurantDetails?.address_components?.[5]?.long_name ?? '',
         },
         coordinates: {
           latitude: restaurantDetails.geometry.location.lat,
@@ -120,20 +128,23 @@ export class GoogleMapsService {
             text: review.text,
             createdAt: review.time,
           })) ?? [],
-        priceLevel: restaurantDetails.price_level,
+        priceLevel: restaurantDetails?.price_level ?? 0,
         photos:
           restaurantDetails.photos?.map((photo) => ({
             reference: photo.photo_reference,
             width: photo.width,
             height: photo.height,
           })) ?? [],
-        openingHours: restaurantDetails.opening_hours.weekday_text ?? [],
+        openingHours: restaurantDetails?.opening_hours?.weekday_text ?? [],
         website: restaurantDetails?.website ?? '',
         phoneNumber: restaurantDetails?.formatted_phone_number ?? '',
       };
     } catch (err) {
-      Logger.error(err, 'GoogleMapsService.MapRestaurantFullData');
-      throw err;
+      Logger.error(
+        err?.response?.data?.error_message ?? err,
+        'GoogleMapsService.mapRestaurantFullData',
+      );
+      throw new Error(err?.response?.data?.error_message ?? 'Unexpected GMAPS unknown error');
     }
   }
 
@@ -151,7 +162,7 @@ export class GoogleMapsService {
 
       const [restaurants] = await this.rateLimitPromiseQueue<BaseRestaurant>(
         locations.map((location) => () => this.mapRestaurantFullData(location)),
-        { concurrency: 20, interval: 1000, runsPerInterval: 50 },
+        { concurrency: 1, interval: 1000, runsPerInterval: 2 },
       );
 
       return restaurants;
@@ -167,10 +178,14 @@ export class GoogleMapsService {
   }
 
   async rateLimitPromiseQueue<T>(
-    promises: Array<(options?: TaskOptions) => Promise<T>>,
+    promises: Array<(options?: { signal?: AbortSignal }) => Promise<T>>,
     options: { concurrency: number; interval: number; runsPerInterval: number },
   ): Promise<[T[], any[]]> {
     return new Promise(async (resolve, reject) => {
+      Logger.debug(
+        `Rate limiting ${promises.length} promises with concurrency ${options.concurrency} and interval ${options.interval}ms`,
+        'GoogleMapsService.rateLimitPromiseQueue',
+      );
       try {
         const PQueue = (await import('p-queue')).default;
         const success = [];
@@ -184,7 +199,13 @@ export class GoogleMapsService {
         queue.on('error', (error) =>
           Logger.error(error, 'GoogleMapsService.rateLimitPromiseQueue'),
         );
-        queue.on('completed', (result) => success.push(result));
+        queue.on('completed', (result) => {
+          success.push(result);
+          Logger.debug(
+            `Promise completed, ${queue.size} remaining, ${queue.pending} pending`,
+            'GoogleMapsService.rateLimitPromiseQueue',
+          );
+        });
         queue.on('empty', () => resolve([success, errors]));
         queue.on('error', (error) => errors.push(error));
         queue.addAll(promises);
