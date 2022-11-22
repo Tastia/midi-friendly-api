@@ -12,4 +12,7 @@ export default registerAs('app', () => ({
   database: {
     url: process.env.DATABASE_URL,
   },
+  websocket: {
+    port: parseInt(process.env.WEBSOCKET_PORT, 10) || 8080,
+  },
 }));
