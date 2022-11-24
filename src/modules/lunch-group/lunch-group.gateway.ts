@@ -22,7 +22,7 @@ import { DeleteGroupDto } from './dto/delete-group.dto';
 @WebSocketGateway(8080, { cors: { origin: '*' } })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
   @WebSocketServer() server: Server;
-  public static userSockets = new Map<string, Socket>();
+  public static userSockets: Map<string, Socket> = new Map<string, Socket>();
   public static lunchGroupUsers = new Map<string, string[]>();
 
   constructor(
