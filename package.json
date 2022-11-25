@@ -56,10 +56,10 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "socket.io": "^4.5.3",
-    "winston": "^3.8.2"
+    "winston": "^3.8.2",
+    "@nestjs/cli": "^9.0.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^9.0.0",
     "@nestjs/schematics": "^9.0.3",
     "@nestjs/testing": "^9.0.0",
     "@types/bcrypt": "^5.0.0",
