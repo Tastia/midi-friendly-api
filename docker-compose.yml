@@ -1,0 +1,27 @@
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: ./docker/DockerFile-nest
+    tty: true
+    container_name: api
+    ports:
+      - 3000:${API_PORT}
+    env_file: .env
+
+  # nginx:
+  #   build:
+  #     context: ./docker
+  #     dockerfile: DockerFile-nginx
+  #   tty: true
+  #   container_name: nginx
+  #   depends_on:
+  #     - api
+  #   environment:
+  #     - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
+  #     - NEST_HOST=${NEST_HOST}
+  #     - NEST_PORT=${NEST_PORT}
+  #     - NGINX_MAX_BODY=${NGINX_MAX_BODY}
+  #   ports:
+  #     - 80:80
+  #   env_file: .env
