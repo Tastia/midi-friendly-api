@@ -38,7 +38,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
   async handleConnection(@ConnectedSocket() client: Socket) {
     const { authorization, organizationid } = client.handshake.headers;
-    const user = await this.authService.validateAccessToken(authorization);
+    const user = await this.authService.validateAccessToken(authorization.split(' ')[1]);
     const organization = await this.organizationService.findOne({ _id: organizationid });
     if (!user || !organization) {
       client.disconnect();

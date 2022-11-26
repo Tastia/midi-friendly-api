@@ -19,7 +19,7 @@ export class GatewayGuard implements CanActivate {
       const client: Socket = context.switchToWs().getClient<Socket>();
       const authToken: string = client.handshake.headers.authorization;
       const organziationId: string = client.handshake.headers.organizationId as string;
-      const user = await this.authService.validateAccessToken(authToken);
+      const user = await this.authService.validateAccessToken(authToken.split(' ')[1]);
       const organization = await this.organizationService.findOne({ _id: organziationId });
       context.switchToHttp().getRequest().user = user;
       context.switchToHttp().getRequest().organization = organization;
