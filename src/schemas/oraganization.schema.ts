@@ -8,7 +8,7 @@ import { Restaurant } from './restaurant.schema';
 
 export type OrganizationDocument = Organization & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true } })
 export class Organization {
   @Transform(({ value }) => value.toString())
   _id: mongoose.Types.ObjectId;
