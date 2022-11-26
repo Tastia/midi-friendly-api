@@ -22,6 +22,7 @@ import { Server, Socket } from 'socket.io';
 import { ActiveOrganization } from '@common/decorators/organization.decorator';
 import { DeleteGroupDto } from './dto/delete-group.dto';
 import { WsAuth } from '@common/decorators/ws-auth.decorator';
+import { Logger } from '@nestjs/common';
 
 @WebSocketGateway(8080, { cors: { origin: '*' } })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
@@ -44,6 +45,10 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       client.disconnect();
       throw new WsException('Unauthorized');
     }
+
+    Logger.debug(
+      `User ${user._id.toString()} connected to organization ${organization._id.toString()}`,
+    );
 
     LunchGroupGateway.userSockets.set(user._id.toString(), client);
 
@@ -74,7 +79,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
     const { authorization, organizationid } = client.handshake.headers;
-    const user = await this.authService.validateAccessToken(authorization);
+    const user = await this.authService.validateAccessToken(authorization.split(' ')[1]);
     const organization = await this.organizationService.findOne({ _id: organizationid });
 
     LunchGroupGateway.userSockets.delete(user._id.toString());
