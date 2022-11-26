@@ -1,3 +1,4 @@
+import { AuthModule } from './../auth/auth.module';
 import { OrganizationModule } from '@modules/organization/organization.module';
 import { RestaurantModule } from '@modules/restaurant/restaurant.module';
 import { UserModule } from '@modules/user/user.module';
@@ -18,6 +19,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     UserModule,
     RestaurantModule,
     OrganizationModule,
+    AuthModule,
   ],
   providers: [LunchGroupService, LunchGroupGateway],
   controllers: [LunchGroupController],
