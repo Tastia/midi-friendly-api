@@ -2,7 +2,7 @@ services:
   api:
     build: 
       context: .
-      dockerfile: ./docker/DockerFile-nest
+      dockerfile: ./.docker/DockerFile-nest
     tty: true
     container_name: api
     ports:
