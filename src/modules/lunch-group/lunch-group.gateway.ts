@@ -69,7 +69,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       users: await this.GetOnlineOrganizationUsers(organization._id.toString()),
     });
     client.emit(LunchGroupEmittedEvents.setGroupList, {
-      groups: await this.lunchGroupService.find({ organization: organization._id.toString() }),
+      groups: await this.lunchGroupService
+        .find({ organization: organization._id.toString() })
+        .populate('users'),
     });
   }
 
@@ -101,7 +103,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
   ) {
     const group = await (
       await this.lunchGroupService.create(createdGroup, user, organization)
-    ).populate('users owner restaurant');
+    ).populate('users owner');
     this.RegisterLocalGroup(group._id.toString(), user._id.toString());
     this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     client.join(group._id.toString());
