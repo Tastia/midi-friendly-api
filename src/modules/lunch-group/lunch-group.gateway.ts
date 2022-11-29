@@ -69,9 +69,10 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       users: await this.GetOnlineOrganizationUsers(organization._id.toString()),
     });
     client.emit(LunchGroupEmittedEvents.setGroupList, {
-      groups: await this.lunchGroupService
-        .find({ organization: organization._id.toString() })
-        .populate('users'),
+      groups: await this.lunchGroupService.find({ organization: organization._id.toString() }, [
+        { path: 'users', select: 'firstName lastName _id' },
+        { path: 'owner', select: 'firstName lastName _id' },
+      ]),
     });
   }
 
