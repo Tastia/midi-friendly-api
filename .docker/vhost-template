@@ -2,13 +2,12 @@
 
 server {
 	listen 80;
-	server_name ${NGINX_SERVER_NAME};
-	root /app/public;
-	client_max_body_size ${NGINX_MAX_BODY};
+	server_name api.midifriendly.com;
+	client_max_body_size 100M;
 
 	location / {
 		# try_files $uri =404;
-		proxy_pass  http://${NEST_HOST}:${NEST_PORT};
+		proxy_pass  http://localhost:3333;
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
