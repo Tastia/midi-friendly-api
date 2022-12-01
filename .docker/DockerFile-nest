@@ -7,7 +7,7 @@ RUN mkdir api²
 COPY . ./api
 WORKDIR /api
 
-RUN npm install --production
+RUN npm install
 
 RUN npm run build
 
