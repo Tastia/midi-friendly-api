@@ -9,7 +9,7 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import CloudWatchTransport from 'winston-cloudwatch';
+import * as WinstonCloudWatch from 'winston-cloudwatch';
 
 import {
   AsyncApiDocumentBuilder,
@@ -42,12 +42,12 @@ async function bootstrap() {
         new winston.transports.Console({ stderrLevels: ['error'] }),
         ...(process.env.NODE_ENV === 'production'
           ? [
-              new CloudWatchTransport({
+              new WinstonCloudWatch({
                 logGroupName: process.env.AWS_CLOUDWATCH_API_GROUP_NAME,
                 logStreamName: `${process.env.AWS_CLOUDWATCH_API_GROUP_NAME}-${process.env.NODE_ENV}`,
                 awsAccessKeyId: process.env.AWS_ACCESS_KEY,
                 awsSecretKey: process.env.AWS_KEY_SECRET,
-                awsRegion: process.env.AWS_CLOUDWATCH_AWS_REGION,
+                awsRegion: process.env.AWS_CLOUDWATCH_REGION,
                 messageFormatter: function (item) {
                   return item.level + ': ' + item.message + ' ' + JSON.stringify(item.meta);
                 },
