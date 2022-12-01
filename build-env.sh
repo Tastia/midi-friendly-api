@@ -1,4 +1,3 @@
-cd midi-friendly-api/
 if [ -f .env ]; then
     rm .env
 fi
