@@ -117,7 +117,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ConnectedSocket() client: Socket,
     @ActiveUser() user: User,
     @ActiveOrganization() organization: Organization,
-    updatedGroupDto: UpdateGroupDto,
+    @MessageBody() updatedGroupDto: UpdateGroupDto,
   ) {
     const udpatedGroup = await this.lunchGroupService.update(
       updatedGroupDto.groupId,
