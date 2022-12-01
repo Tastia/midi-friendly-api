@@ -1,4 +1,7 @@
-rm .env
+cd midi-friendly-api/
+if [ -f .env ]; then
+    rm .env
+fi
 
 touch .env && echo "
 DATABASE_URL=$DATABASE_URL

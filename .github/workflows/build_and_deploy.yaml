@@ -1,0 +1,36 @@
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Build up-to-date .env config
+        uses: appleboy/ssh-action@master
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_KEY_SECRET: ${{ secrets.AWS_KEY_SECRET }}
+        with:
+          envs: TAG_VERSION
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: cd ./midi-friendly-api && bash ./deploy.sh
+      - name: Build image & deploy
+        uses: appleboy/ssh-action@master
+        env:
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+        with:
+          envs: TAG_VERSION
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: cd ./midi-friendly-api && bash ./deploy.sh
