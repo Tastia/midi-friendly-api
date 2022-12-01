@@ -37,6 +37,10 @@ export class UserService {
     return this.userModel.find(filter ?? {}).populate(populate ?? ('' as any));
   }
 
+  findOne(filter?: FilterQuery<UserDocument>, populate?: PopulateQuery) {
+    return this.userModel.findOne(filter ?? {}).populate(populate ?? ('' as any));
+  }
+
   async findOneByEmailWithPassword(email: string) {
     return this.userModel
       .findOne({ email: { $regex: this.escapeRegExp(email), $options: 'i' } })

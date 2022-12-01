@@ -23,7 +23,8 @@ COPY ./docker ./api/docker
 WORKDIR /api
 
 # Install & Build
-RUN npm install  
+RUN npm install
+
 RUN npm run build
 
 ENTRYPOINT ["tail", "-f", "/dev/null"]

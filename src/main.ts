@@ -9,6 +9,14 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import * as WinstonCloudWatch from 'winston-cloudwatch';
+
+import {
+  AsyncApiDocumentBuilder,
+  AsyncApiModule,
+  AsyncApiService,
+  AsyncServerObject,
+} from 'nestjs-asyncapi';
 
 const errorPrinter = winston.format((info) => {
   if (!info.error) return info;
@@ -30,7 +38,23 @@ async function bootstrap() {
           prettyPrint: true,
         }),
       ),
-      transports: [new winston.transports.Console({ stderrLevels: ['error'] })],
+      transports: [
+        new winston.transports.Console({ stderrLevels: ['error'] }),
+        ...(process.env.NODE_ENV === 'production'
+          ? [
+              new WinstonCloudWatch({
+                logGroupName: process.env.AWS_CLOUDWATCH_API_GROUP_NAME,
+                logStreamName: `${process.env.AWS_CLOUDWATCH_API_GROUP_NAME}-${process.env.NODE_ENV}`,
+                awsAccessKeyId: process.env.AWS_ACCESS_KEY,
+                awsSecretKey: process.env.AWS_KEY_SECRET,
+                awsRegion: process.env.AWS_CLOUDWATCH_REGION,
+                messageFormatter: function (item) {
+                  return item.level + ': ' + item.message + ' ' + JSON.stringify(item.meta);
+                },
+              }),
+            ]
+          : []),
+      ],
     }),
   });
 
@@ -48,7 +72,33 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger-spec.json', JSON.stringify(document));
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api-docs', app, document);
+
+  const asyncApiOptions = new AsyncApiDocumentBuilder()
+    .setTitle('Midi friendly gateways API')
+    .setDescription('WebSocket Gatways docs for Midi friendly services')
+    .setVersion('0.1.0')
+    .setDefaultContentType('application/json')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT')
+    .addServer('midi-friendly-server', {
+      url: `ws://localhost:${app.get(ConfigService).get('app.websocket.port')}/`,
+      protocol: 'socket.io',
+      protocolVersion: '4',
+      description: 'Allows you to connect using the websocket protocol to our Socket.io server.',
+      variables: {
+        port: {
+          description: `Secure connection (TLS) is available through port ${app
+            .get(ConfigService)
+            .get('app.websocket.port')}.`,
+          default: `${app.get(ConfigService).get('app.websocket.port')}`,
+        },
+      },
+      bindings: {},
+    })
+    .build();
+
+  const asyncapiDocument = await AsyncApiModule.createDocument(app, asyncApiOptions);
+  await AsyncApiModule.setup('websocket-docs', app, asyncapiDocument);
 
   app.useStaticAssets(join(__dirname, '..', 'public'), {
     setHeaders: (res) => {

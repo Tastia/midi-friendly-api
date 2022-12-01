@@ -1,3 +1,5 @@
+import { OrganizationService } from './../organization/organization.service';
+import { AuthService } from './../auth/auth.service';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { LunchGroupEmittedEvents } from '@common/types/lunchGroup';
@@ -14,27 +16,40 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ActiveOrganization } from '@common/decorators/organization.decorator';
 import { DeleteGroupDto } from './dto/delete-group.dto';
+import { WsAuth } from '@common/decorators/ws-auth.decorator';
+import { Logger } from '@nestjs/common';
 
 @WebSocketGateway(8080, { cors: { origin: '*' } })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
   @WebSocketServer() server: Server;
-  public static userSockets = new Map<string, Socket>();
+  public static userSockets: Map<string, Socket> = new Map<string, Socket>();
   public static lunchGroupUsers = new Map<string, string[]>();
 
   constructor(
+    private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly lunchGroupService: LunchGroupService,
+    private readonly organizationService: OrganizationService,
   ) {}
 
-  async handleConnection(
-    @ConnectedSocket() client: Socket,
-    @ActiveUser() user: User,
-    @ActiveOrganization() organization: Organization,
-  ) {
+  async handleConnection(@ConnectedSocket() client: Socket) {
+    const { authorization, organizationid } = client.handshake.headers;
+    const user = await this.authService.validateAccessToken(authorization.split(' ')[1]);
+    const organization = await this.organizationService.findOne({ _id: organizationid });
+    if (!user || !organization) {
+      client.disconnect();
+      throw new WsException('Unauthorized');
+    }
+
+    Logger.debug(
+      `User ${user._id.toString()} connected to organization ${organization._id.toString()}`,
+    );
+
     LunchGroupGateway.userSockets.set(user._id.toString(), client);
 
     client.join(organization._id.toString());
@@ -55,18 +70,17 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     });
     client.emit(LunchGroupEmittedEvents.setGroupList, {
       groups: await this.lunchGroupService.find({ organization: organization._id.toString() }, [
-        'users',
-        'owner',
-        'restaurant',
+        { path: 'users', select: 'firstName lastName _id' },
+        { path: 'owner', select: 'firstName lastName _id' },
       ]),
     });
   }
 
-  async handleDisconnect(
-    @ConnectedSocket() client: Socket,
-    @ActiveUser() user: User,
-    @ActiveOrganization() organization: Organization,
-  ) {
+  async handleDisconnect(@ConnectedSocket() client: Socket) {
+    const { authorization, organizationid } = client.handshake.headers;
+    const user = await this.authService.validateAccessToken(authorization.split(' ')[1]);
+    const organization = await this.organizationService.findOne({ _id: organizationid });
+
     LunchGroupGateway.userSockets.delete(user._id.toString());
 
     const userGroups = this.GetUserGroups(user._id.toString());
@@ -80,29 +94,30 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       .emit(LunchGroupEmittedEvents.userDisconnected, { userId: user._id.toString() });
   }
 
+  @WsAuth()
   @SubscribeMessage(LunchGroupReceivedEvents.createGroup)
   async createGroup(
     @ConnectedSocket() client: Socket,
     @ActiveUser() user: User,
     @ActiveOrganization() organization: Organization,
-    createdGroup: CreateGroupDto,
+    @MessageBody() createdGroup: CreateGroupDto,
   ) {
     const group = await (
       await this.lunchGroupService.create(createdGroup, user, organization)
-    ).populate('users owner restaurant');
+    ).populate('users owner');
     this.RegisterLocalGroup(group._id.toString(), user._id.toString());
     this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     client.join(group._id.toString());
     this.server.to(organization._id.toString()).emit(LunchGroupEmittedEvents.addGroup, { group });
-    client.emit(LunchGroupEmittedEvents.setGroupList, { group });
   }
 
+  @WsAuth()
   @SubscribeMessage(LunchGroupReceivedEvents.updateGroup)
   async updateGroup(
     @ConnectedSocket() client: Socket,
     @ActiveUser() user: User,
     @ActiveOrganization() organization: Organization,
-    updatedGroupDto: UpdateGroupDto,
+    @MessageBody() updatedGroupDto: UpdateGroupDto,
   ) {
     const udpatedGroup = await this.lunchGroupService.update(
       updatedGroupDto.groupId,
@@ -113,6 +128,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       .emit(LunchGroupEmittedEvents.updateGroup, { group: udpatedGroup });
   }
 
+  @WsAuth()
   @SubscribeMessage(LunchGroupReceivedEvents.deleteGroup)
   async deleteGroup(
     @ConnectedSocket() client: Socket,
@@ -127,6 +143,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       .emit(LunchGroupEmittedEvents.removeGroup, { groupId });
   }
 
+  @WsAuth()
   @SubscribeMessage(LunchGroupReceivedEvents.joinGroup)
   async joinGroup(
     @ConnectedSocket() client: Socket,
@@ -142,6 +159,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       .emit(LunchGroupEmittedEvents.addUserToGroup, { groupId, user });
   }
 
+  @WsAuth()
   @SubscribeMessage(LunchGroupReceivedEvents.leaveGroup)
   async leaveGroup(
     @ConnectedSocket() client: Socket,

@@ -17,6 +17,9 @@ export class LunchGroup {
   status: 'open' | 'closed';
 
   @Prop()
+  meetingTime?: string;
+
+  @Prop()
   userSlots?: number;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' })

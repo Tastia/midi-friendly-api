@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { utilities as nestWinstonModuleUtilities } from 'nest-winston/dist/winston.utilities';
-
+import CloudWatchTransport from 'winston-cloudwatch';
 const errorPrinter = winston.format((info) => {
   if (!info.error) return info;
 
@@ -29,7 +29,23 @@ async function bootstrap() {
           prettyPrint: true,
         }),
       ),
-      transports: [new winston.transports.Console({ stderrLevels: ['error'] })],
+      transports: [
+        new winston.transports.Console({ stderrLevels: ['error'] }),
+        ...(process.env.NODE_ENV === 'production'
+          ? [
+              new CloudWatchTransport({
+                logGroupName: process.env.AWS_CLOUDWATCH_WORKER_GROUP_NAME,
+                logStreamName: `${process.env.AWS_CLOUDWATCH_WORKER_GROUP_NAME}-${process.env.NODE_ENV}`,
+                awsAccessKeyId: process.env.AWS_ACCESS_KEY,
+                awsSecretKey: process.env.AWS_KEY_SECRET,
+                awsRegion: process.env.AWS_CLOUDWATCH_AWS_REGION,
+                messageFormatter: function (item) {
+                  return item.level + ': ' + item.message + ' ' + JSON.stringify(item.meta);
+                },
+              }),
+            ]
+          : []),
+      ],
     }),
   });
 

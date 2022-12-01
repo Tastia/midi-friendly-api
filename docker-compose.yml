@@ -3,7 +3,7 @@ services:
     container_name: api-nest
     build:
       context: .
-      dockerfile: ./docker/DockerFile-nest
+      dockerfile: ./.docker/DockerFile-nest
     tty: true
     ports:
       - 3000:${API_PORT}

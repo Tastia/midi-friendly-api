@@ -48,6 +48,17 @@ export class AuthService {
     });
   }
 
+  async validateAccessToken(token: string): Promise<User> {
+    try {
+      Logger.debug(`Validating access token ${token}`);
+      const payload = await this.jwtService.verifyAsync(token);
+      return await this.userService.findOne({ _id: payload._id });
+    } catch (error) {
+      Logger.error(error);
+      return null;
+    }
+  }
+
   protected getActiveAccountInfo(user: UserDocument): ActiveAccount {
     const { _id, firstName, lastName, email } = user;
     return { _id, firstName, lastName, email };
