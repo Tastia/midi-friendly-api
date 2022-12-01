@@ -19,7 +19,7 @@ COPY ./tsconfig.json ./api
 
 # # folder needed
 COPY ./src ./api/src
-COPY ./docker ./api/docker
+COPY ./.docker ./api/.docker
 WORKDIR /api
 
 RUN npm install --global --force yarn
