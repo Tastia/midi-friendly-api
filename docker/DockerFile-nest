@@ -1,15 +1,30 @@
 FROM node:16-alpine3.15
 
-ARG NODE_ENV=production
+ENV NODE_OPTIONS=--max_old_space_size=2048
+
+ARG NODE_ENV=development
 ENV NODE_ENV=${NODE_ENV}
 
-RUN mkdir api²
-COPY . ./api
+RUN mkdir api
+
+# files needed
+# COPY . ./api
+COPY .env ./api
+COPY ./package.json ./api
+COPY ./nest-cli-worker.json ./api
+COPY ./nest-cli.json ./api
+COPY ./pnpm-lock.yaml ./api
+COPY ./tsconfig.build.json ./api
+COPY ./tsconfig.json ./api
+
+# # folder needed
+COPY ./src ./api/src
+COPY ./docker ./api/docker
 WORKDIR /api
 
-RUN npm install --production
-
+# Install & Build
+RUN npm install  
 RUN npm run build
 
-# ENTRYPOINT ["tail", "-f", "/dev/null"]
-CMD ["npm", "run", "start"]
+ENTRYPOINT ["tail", "-f", "/dev/null"]
+# CMD ["docker/run.sh"]
