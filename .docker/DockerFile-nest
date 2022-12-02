@@ -8,7 +8,6 @@ ENV NODE_ENV=${NODE_ENV}
 RUN mkdir api
 
 # files needed
-# COPY . ./api
 COPY .env ./api
 COPY ./package.json ./api
 COPY ./nest-cli-worker.json ./api
@@ -17,15 +16,17 @@ COPY ./pnpm-lock.yaml ./api
 COPY ./tsconfig.build.json ./api
 COPY ./tsconfig.json ./api
 
-# # folder needed
+# folder needed
 COPY ./src ./api/src
-COPY ./.docker ./api/.docker
+# COPY ./node_modules ./api/node_modules
+# COPY ./.docker/run.sh ./api/
 WORKDIR /api
 
-RUN npm install --global --force yarn
-RUN yarn
+RUN npm install 
 
 RUN npm run build
 
+# RUN chmod u+r+x ./run.sh
+
 # ENTRYPOINT ["tail", "-f", "/dev/null"]
-CMD ["./api/.docker/run.sh"]
+ENTRYPOINT ["npm", "run", "start:prod", "&", "npm", "run", "worker:prod", "&"]

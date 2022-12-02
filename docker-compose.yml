@@ -4,7 +4,8 @@ services:
     build:
       context: .
       dockerfile: ./.docker/DockerFile-nest
-    tty: true
+    # command: bash -c "npm run start:prod"
+    # tty: true
     ports:
       - 3000:${API_PORT}
     env_file: .env
