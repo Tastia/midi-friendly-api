@@ -24,7 +24,7 @@ import { DeleteGroupDto } from './dto/delete-group.dto';
 import { WsAuth } from '@common/decorators/ws-auth.decorator';
 import { Logger } from '@nestjs/common';
 
-@WebSocketGateway(8080, { cors: { origin: '*' } })
+@WebSocketGateway({ cors: { origin: '*' } })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
   @WebSocketServer() server: Server;
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();
