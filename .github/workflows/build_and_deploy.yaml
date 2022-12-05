@@ -33,7 +33,7 @@ jobs:
             git pull
             if [ -f .env ]; then
                 rm .env
-            fi    
+            fi     
             touch .env && echo "
             DATABASE_URL=$DATABASE_URL
 
@@ -51,7 +51,7 @@ jobs:
             JWT_REFRESH_TOKEN_EXPIRATION=1d
             JWT_INVITATION_EXPIRATION=30d
             
-            NGINX_SERVER_NAME = api.midifriendly.com
+            NGINX_SERVER_NAME=api.midifriendly.com
             NEST_HOST=localhost
             NEST_PORT=3000
             NGINX_MAX_BODY=100M
@@ -63,13 +63,13 @@ jobs:
             AWS_CLOUDWATCH_WORKER_GROUP_NAME=midi-friendly-worker
             AWS_CLOUDWATCH_REGION=eu-central-1
             " >> .env
-      # - name: Build image & deploy
-      #   uses: appleboy/ssh-action@master
-      #   env:
-      #     RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
-      #   with:
-      #     envs: RELEASE_VERSION
-      #     host: ${{ secrets.SSH_HOST }}
-      #     username: ${{ secrets.SSH_USERNAME }}
-      #     password: ${{ secrets.SSH_PASSWORD }}
-      #     script: cd ./midi-friendly-api && bash ./deploy.sh
+      - name: Build image & deploy
+        uses: appleboy/ssh-action@master
+        env:
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+        with:
+          envs: RELEASE_VERSION
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: cd ./midi-friendly-api && bash ./deploy.sh
