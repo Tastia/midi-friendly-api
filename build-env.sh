@@ -2,6 +2,9 @@ if [ -f .env ]; then
     rm .env
 fi
 
+printenv | more
+
+
 touch .env && echo "
 DATABASE_URL=$DATABASE_URL
 
