@@ -81,7 +81,7 @@ async function bootstrap() {
     .setDefaultContentType('application/json')
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT')
     .addServer('midi-friendly-server', {
-      url: `ws://localhost:${app.get(ConfigService).get('app.websocket.port')}/`,
+      url: `ws://localhost:${app.get(ConfigService).get('app.port')}/`,
       protocol: 'socket.io',
       protocolVersion: '4',
       description: 'Allows you to connect using the websocket protocol to our Socket.io server.',
@@ -89,8 +89,8 @@ async function bootstrap() {
         port: {
           description: `Secure connection (TLS) is available through port ${app
             .get(ConfigService)
-            .get('app.websocket.port')}.`,
-          default: `${app.get(ConfigService).get('app.websocket.port')}`,
+            .get('app.port')}.`,
+          default: `${app.get(ConfigService).get('app.port')}`,
         },
       },
       bindings: {},
