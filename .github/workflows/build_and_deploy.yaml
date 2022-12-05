@@ -23,7 +23,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          script: cd ./midi-friendly-api && bash ./build-env.sh
+          script: cd ./midi-friendly-api && bash ./build-env.sh $DATABASE_URL $GOOGLE_MAPS_API_KEY $REDIS_HOST $REDIS_PORT $AWS_ACCESS_KEY $AWS_KEY_SECRET
       # - name: Build image & deploy
       #   uses: appleboy/ssh-action@master
       #   env:
