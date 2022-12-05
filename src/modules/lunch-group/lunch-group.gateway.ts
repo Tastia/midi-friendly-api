@@ -23,8 +23,30 @@ import { ActiveOrganization } from '@common/decorators/organization.decorator';
 import { DeleteGroupDto } from './dto/delete-group.dto';
 import { WsAuth } from '@common/decorators/ws-auth.decorator';
 import { Logger } from '@nestjs/common';
+import { AsyncApiPub, AsyncApiService } from 'nestjs-asyncapi';
 
-@WebSocketGateway({ cors: { origin: '*' } })
+const GATEWAY_CHANNEL = 'LunchGroupGateway';
+const AUTH_HEADERS_DOC = {
+  type: 'object',
+  properties: {
+    Authorization: {
+      description: 'JWT token',
+      type: 'string',
+      example: '',
+    },
+    organizationId: {
+      description: 'Organization ID',
+      type: 'string',
+      example: '',
+    },
+  },
+};
+
+@AsyncApiService({
+  serviceName: 'LunchGroupGateway',
+  description: 'Lunch group gateway - Manages all live interactions with the users map ',
+})
+@WebSocketGateway({ cors: { origin: '*' }, namespace: 'lunch-group' })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
   @WebSocketServer() server: Server;
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();
@@ -94,6 +116,16 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       .emit(LunchGroupEmittedEvents.userDisconnected, { userId: user._id.toString() });
   }
 
+  @AsyncApiPub({
+    channel: LunchGroupReceivedEvents.createGroup,
+    summary: 'Create lunch group',
+    description:
+      'Creates a new lunch group on the DB, and send it to all users of same organization',
+    message: {
+      payload: { type: CreateGroupDto },
+      headers: AUTH_HEADERS_DOC as any,
+    },
+  })
   @WsAuth()
   @SubscribeMessage(LunchGroupReceivedEvents.createGroup)
   async createGroup(
@@ -111,6 +143,16 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     this.server.to(organization._id.toString()).emit(LunchGroupEmittedEvents.addGroup, { group });
   }
 
+  @AsyncApiPub({
+    channel: LunchGroupReceivedEvents.updateGroup,
+    summary: 'Update lunch group',
+    description:
+      'Updates an existing lunch group on the DB, and update it for all users of same organization',
+    message: {
+      payload: { type: UpdateGroupDto },
+      headers: AUTH_HEADERS_DOC as any,
+    },
+  })
   @WsAuth()
   @SubscribeMessage(LunchGroupReceivedEvents.updateGroup)
   async updateGroup(
