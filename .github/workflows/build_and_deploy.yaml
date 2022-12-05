@@ -72,4 +72,10 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          script: cd ./midi-friendly-api && bash ./deploy.sh
+          script: |
+            cd ./midi-friendly-api 
+            git fetch --all
+            git pull
+            git checkout $RELEASE_VERSION
+            git pull
+            bash ./deploy.sh
