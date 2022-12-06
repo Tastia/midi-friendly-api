@@ -27,10 +27,8 @@ jobs:
           script: |
             echo "Building API .env for $RELEASE_VERSION"
             cd ./midi-friendly-api
-            git fetch --all
-            git pull
-            git checkout $RELEASE_VERSION
-            git pull
+            git fetch --all --tags
+            git checkout tags/$RELEASE_VERSION
             if [ -f .env ]; then
                 rm .env
             fi     
@@ -74,8 +72,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             cd ./midi-friendly-api 
-            git fetch --all
-            git pull
-            git checkout $RELEASE_VERSION
+            git fetch --all --tags
+            git checkout tags/$RELEASE_VERSION
             git pull
             bash ./deploy.sh
