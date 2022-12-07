@@ -28,7 +28,7 @@ jobs:
             echo "Building API .env for $RELEASE_VERSION"
             cd ./midi-friendly-api
             git fetch --all --tags
-            git checkout tags/$RELEASE_VERSION
+            git checkout $RELEASE_VERSION
             if [ -f .env ]; then
                 rm .env
             fi     
@@ -73,6 +73,6 @@ jobs:
           script: |
             cd ./midi-friendly-api 
             git fetch --all --tags
-            git checkout tags/$RELEASE_VERSION
+            git checkout $RELEASE_VERSION
             git pull
             bash ./deploy.sh
