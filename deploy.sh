@@ -1,7 +1,6 @@
 #!/bin/sh
 
-docker container prune -f
-docker volume prune -f
-docker-compose down --rmi all
+sudo docker image prune -f
+sudo docker system prune -f
 sudo docker-compose up -d --build
 sudo nginx -s reload
