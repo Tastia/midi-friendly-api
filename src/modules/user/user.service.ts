@@ -43,7 +43,7 @@ export class UserService {
 
   async findOneByEmailWithPassword(email: string) {
     return this.userModel
-      .findOne({ email: { $regex: this.escapeRegExp(email), $options: 'i' } })
+      .findOne({ 'credentials.email': { $regex: this.escapeRegExp(email), $options: 'i' } })
       .populate('password');
   }
 

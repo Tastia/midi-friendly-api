@@ -34,9 +34,32 @@ export class AuthService {
    * @param email
    * @param password
    */
-  async validate(email: string, password: string): Promise<User> {
-    const account = await this.userService.findOneByEmailWithPassword(email);
-    if (account && (await compare(password, account.password))) return account;
+  async validate(payload: AuthPayload): Promise<User> {
+    const account = await this.userService.findOneByEmailWithPassword(payload.email);
+    if (
+      account &&
+      account.credentials.type === 'email' &&
+      payload.type === 'email' &&
+      (await compare(payload.password, account.credentials.password))
+    )
+      return account;
+
+    if (
+      account &&
+      account.credentials.type === 'google' &&
+      payload.type === 'google' &&
+      (await compare(payload.password, account.credentials.userId))
+    )
+      return account;
+
+    if (
+      account &&
+      account.credentials.type === 'facebook' &&
+      payload.type === 'facebook' &&
+      (await compare(payload.password, account.credentials.userId))
+    )
+      return account;
+
     return null;
   }
 
