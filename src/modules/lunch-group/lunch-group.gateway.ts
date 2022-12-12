@@ -1,8 +1,13 @@
+import { AddGroupDto } from './sub-dto/add-group.dto';
+import { UserDisconnectedDto } from './sub-dto/user-disconnected.dt';
+import { UserConnectedDto } from './sub-dto/user-connected.dto';
+import { SetUserListDto } from './sub-dto/set-user-list.dto';
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { OrganizationService } from './../organization/organization.service';
 import { AuthService } from './../auth/auth.service';
-import { UpdateGroupDto } from './dto/update-group.dto';
-import { CreateGroupDto } from './dto/create-group.dto';
+import { UpdateGroupDto } from './pub-dto/update-group.dto';
+import { UpdateGroupDto as SUpdateGroupDto } from './sub-dto/update-group.dto';
+import { CreateGroupDto } from './pub-dto/create-group.dto';
 import { LunchGroupEmittedEvents } from '@common/types/lunchGroup';
 import { LunchGroupService } from './lunch-group.service';
 import { UserService } from '@modules/user/user.service';
@@ -21,13 +26,16 @@ import {
 } from '@nestjs/websockets';
 import type { BroadcastOperator, Server, Socket } from 'socket.io';
 import { ActiveOrganization } from '@common/decorators/organization.decorator';
-import { DeleteGroupDto } from './dto/delete-group.dto';
+import { DeleteGroupDto } from './pub-dto/delete-group.dto';
 import { WsAuth } from '@common/decorators/ws-auth.decorator';
 import { Logger, UsePipes } from '@nestjs/common';
 import { AsyncApiPub, AsyncApiService, AsyncApiSub } from 'nestjs-asyncapi';
-import { AccessGroupDto } from './dto/access-group-dto';
+import { AccessGroupDto } from './pub-dto/access-group-dto';
 import { WSValidationPipe } from '@common/pipes/socket-validation.pipe';
 import { EventsMap } from 'node_modules/socket.io/dist/typed-events';
+import { LunchGroup } from '@schemas/lunchGroup.schema';
+import { SetLunchGroupListDto } from './sub-dto/set-lunch-group-list.dto';
+import { UserAccessGroupDto } from './sub-dto/user-access-group.dto';
 
 const GATEWAY_CHANNEL = 'LunchGroupGateway';
 const AUTH_HEADERS_DOC = {
@@ -50,7 +58,7 @@ const AUTH_HEADERS_DOC = {
   serviceName: 'LunchGroupGateway',
   description: 'Lunch group gateway - Manages all live interactions with the users map ',
 })
-@WebSocketGateway({ cors: { origin: '*' } })
+@WebSocketGateway(8080, { cors: { origin: '*' } })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
   @WebSocketServer() server: Server;
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();
@@ -77,8 +85,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     );
 
     LunchGroupGateway.userSockets.set(user._id.toString(), client);
-
     client.join(organization._id.toString());
+
+    const connectedUsers = await this.GetOnlineOrganizationUsers(organization._id.toString());
     const lunchGroups = await (
       await this.lunchGroupService.getUserLunchGroups(user._id.toString())
     ).filter((group) => group.organization._id.toString() === organization._id.toString());
@@ -88,18 +97,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     });
 
-    client.broadcast
-      .to(organization._id.toString())
-      .emit(LunchGroupEmittedEvents.userConnected, { user });
-    client.emit(LunchGroupEmittedEvents.setUserList, {
-      users: await this.GetOnlineOrganizationUsers(organization._id.toString()),
-    });
-    client.emit(LunchGroupEmittedEvents.setGroupList, {
-      groups: await this.lunchGroupService.find({ organization: organization._id.toString() }, [
-        { path: 'users', select: 'firstName lastName _id' },
-        { path: 'owner', select: 'firstName lastName _id' },
-      ]),
-    });
+    this.emitUserConnected(client.broadcast.to(organization._id.toString()), user);
+    this.emitSetUserList(client, connectedUsers);
+    this.emitSetGroupList(client, lunchGroups);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
@@ -115,9 +115,10 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       client.leave(groupId);
     });
 
-    this.server
-      .to(organization._id.toString())
-      .emit(LunchGroupEmittedEvents.userDisconnected, { userId: user._id.toString() });
+    this.emitUserDisconnected(
+      client.broadcast.to(organization._id.toString()),
+      user._id.toString(),
+    );
   }
 
   @WsAuth()
@@ -145,7 +146,8 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     this.RegisterLocalGroup(group._id.toString(), user._id.toString());
     this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     client.join(group._id.toString());
-    this.server.to(organization._id.toString()).emit(LunchGroupEmittedEvents.addGroup, { group });
+
+    this.emitAddGroup(client.broadcast.to(organization._id.toString()), group);
   }
 
   @WsAuth()
@@ -165,15 +167,19 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ConnectedSocket() client: Socket,
     @ActiveUser() user: User,
     @ActiveOrganization() organization: Organization,
-    @MessageBody() updatedGroupDto: UpdateGroupDto,
+    @MessageBody() { groupData, groupId }: UpdateGroupDto,
   ) {
-    const udpatedGroup = await this.lunchGroupService.update(
-      updatedGroupDto.groupId,
-      updatedGroupDto.groupData,
-    );
-    this.server
-      .to(organization._id.toString())
-      .emit(LunchGroupEmittedEvents.updateGroup, udpatedGroup);
+    const group = await this.lunchGroupService.findOne({
+      _id: groupId,
+      organization: organization._id,
+    });
+
+    if (!group) throw new WsException('Group not found');
+    if (group.owner.toString() !== user._id.toString())
+      throw new WsException('Unauthorized operation');
+
+    const udpatedGroup = await this.lunchGroupService.update(groupId, groupData);
+    this.emitUpdateGroup(this.server.to(organization._id.toString()), udpatedGroup);
   }
 
   @WsAuth()
@@ -195,9 +201,18 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() { groupId }: DeleteGroupDto,
   ) {
+    const group = await this.lunchGroupService.findOne({
+      _id: groupId,
+      organization: organization._id,
+    });
+
+    if (!group) throw new WsException('Group not found');
+    if (group.owner.toString() !== user._id.toString())
+      throw new WsException('Unauthorized operation');
+
     await this.lunchGroupService.delete(groupId);
     this.DeleteLocalGroup(groupId);
-    this.server.to(organization._id.toString()).emit(LunchGroupEmittedEvents.removeGroup, groupId);
+    this.emitRemoveGroup(client.broadcast.to(organization._id.toString()), { groupId });
   }
 
   @WsAuth()
@@ -218,12 +233,14 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() { groupId }: AccessGroupDto,
   ) {
+    client.join(groupId);
+
     await this.lunchGroupService.addUserToGroup(groupId, user);
     this.AddUserToLocalGroup(user._id.toString(), groupId);
-    client.join(groupId);
-    this.server
-      .to(organization._id.toString())
-      .emit(LunchGroupEmittedEvents.addUserToGroup, { groupId, userId: user._id.toString() });
+    this.emitAddUserToGroup(client.broadcast.to(organization._id.toString()), {
+      groupId,
+      userId: user._id.toString(),
+    });
   }
 
   @WsAuth()
@@ -244,13 +261,19 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() { groupId }: { groupId: string },
   ) {
-    await this.lunchGroupService.removeUserFromGroup(groupId, user);
-    this.RemoveUserFromLocaleGroup(user._id.toString(), groupId);
     client.leave(groupId);
-    this.server
-      .to(organization._id.toString())
-      .emit(LunchGroupEmittedEvents.updateGroup, { groupId, userId: user._id.toString() });
+    await this.lunchGroupService.removeUserFromGroup(groupId, user);
+
+    this.RemoveUserFromLocaleGroup(user._id.toString(), groupId);
+    this.emitRemoveUserFromGroup(client.broadcast.to(organization._id.toString()), {
+      groupId,
+      userId: user._id.toString(),
+    });
   }
+
+  // ###############################################################################
+  // ############################ EVENT EMITTERS ###################################
+  // ###############################################################################
 
   @AsyncApiSub({
     channel: LunchGroupEmittedEvents.userConnected,
@@ -258,29 +281,134 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     description: 'Notify clients that user of their org. connected',
     message: {
       payload: {
-        type: User,
+        type: UserConnectedDto,
       },
     },
   })
-  emitUserConnected(eventTarget: BroadcastOperator<EventsMap, any>) {
-    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, {});
+  emitUserConnected(eventTarget: BroadcastOperator<EventsMap, any> | Socket, user: User) {
+    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, { user });
   }
 
-  emitUserDisconnected() {}
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.userDisconnected,
+    summary: 'User disconnected',
+    description: 'Notify clients that user of their org. disconnected',
+    message: {
+      payload: {
+        type: UserDisconnectedDto,
+      },
+    },
+  })
+  emitUserDisconnected(eventTarget: BroadcastOperator<EventsMap, any> | Socket, userId: string) {
+    return eventTarget.emit(LunchGroupEmittedEvents.userDisconnected, { userId });
+  }
 
-  emitSetUserList() {}
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.setUserList,
+    summary: 'Set user list',
+    description: 'Set initial list of users connected to the organization when a user connects',
+    message: {
+      payload: {
+        type: SetUserListDto,
+      },
+    },
+  })
+  emitSetUserList(eventTarget: BroadcastOperator<EventsMap, any> | Socket, users: User[]) {
+    return eventTarget.emit(LunchGroupEmittedEvents.setUserList, { users });
+  }
 
-  emitSetGroupList() {}
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.setGroupList,
+    summary: 'Set group list',
+    description: 'Set initial list of groups of the organization when a user connects',
+    message: {
+      payload: {
+        type: SetLunchGroupListDto,
+      },
+    },
+  })
+  emitSetGroupList(eventTarget: BroadcastOperator<EventsMap, any> | Socket, groups: LunchGroup[]) {
+    return eventTarget.emit(LunchGroupEmittedEvents.setGroupList, { groups });
+  }
 
-  emitAddGroup() {}
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.addGroup,
+    summary: 'Add group',
+    description: 'Notify clients that a group was added to the organization',
+    message: {
+      payload: {
+        type: AddGroupDto,
+      },
+    },
+  })
+  emitAddGroup(eventTarget: BroadcastOperator<EventsMap, any> | Socket, group: LunchGroup) {
+    return eventTarget.emit(LunchGroupEmittedEvents.addGroup, { group });
+  }
 
-  emitUpdateGroup() {}
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.updateGroup,
+    summary: 'Update group',
+    description: 'Notify clients that a group was updated',
+    message: {
+      payload: {
+        type: SUpdateGroupDto,
+      },
+    },
+  })
+  emitUpdateGroup(eventTarget: BroadcastOperator<EventsMap, any> | Socket, group: LunchGroup) {
+    return eventTarget.emit(LunchGroupEmittedEvents.updateGroup, {
+      group,
+      groupId: group._id.toString(),
+    });
+  }
 
-  emitRemoveGroup() {}
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.removeGroup,
+    summary: 'Remove group',
+    description: 'Notify clients that a group was removed from the organization',
+    message: {
+      payload: {
+        type: DeleteGroupDto,
+      },
+    },
+  })
+  emitRemoveGroup(eventTarget: BroadcastOperator<EventsMap, any> | Socket, data: DeleteGroupDto) {
+    return eventTarget.emit(LunchGroupEmittedEvents.removeGroup, data);
+  }
 
-  emitAddUserToGroup() {}
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.addUserToGroup,
+    summary: 'Add user to group',
+    description: 'Notify clients that a user was added to a group',
+    message: {
+      payload: {
+        type: UserAccessGroupDto,
+      },
+    },
+  })
+  emitAddUserToGroup(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    { groupId, userId }: UserAccessGroupDto,
+  ) {
+    return eventTarget.emit(LunchGroupEmittedEvents.addUserToGroup, { groupId, userId });
+  }
 
-  emitRemoveUserFromGroup() {}
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.removeUserFromGroup,
+    summary: 'Add user to group',
+    description: 'Notify clients that a user was added to a group',
+    message: {
+      payload: {
+        type: UserAccessGroupDto,
+      },
+    },
+  })
+  emitRemoveUserFromGroup(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    data: UserAccessGroupDto,
+  ) {
+    return eventTarget.emit(LunchGroupEmittedEvents.removeUserFromGroup, data);
+  }
 
   private RegisterLocalGroup(groupId: string, owner: string) {
     LunchGroupGateway.lunchGroupUsers.set(groupId, [owner]);

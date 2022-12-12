@@ -1,5 +1,5 @@
-import { UpdatedGroupData } from './dto/update-group.dto';
-import { CreateGroupDto } from './dto/create-group.dto';
+import { UpdatedGroupData } from './pub-dto/update-group.dto';
+import { CreateGroupDto } from './pub-dto/create-group.dto';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { LunchGroup, LunchGroupDocument } from '@schemas/lunchGroup.schema';
@@ -14,6 +14,10 @@ export class LunchGroupService {
 
   find(filter?: FilterQuery<LunchGroupDocument>, populate?: PopulateQuery) {
     return this.lunchGroupModel.find(filter ?? {}).populate(populate ?? ('' as any));
+  }
+
+  findOne(filter?: FilterQuery<LunchGroupDocument>, populate?: PopulateQuery) {
+    return this.lunchGroupModel.findOne(filter ?? {}).populate(populate ?? ('' as any));
   }
 
   create(grouppDto: CreateGroupDto, user: User, organization: Organization) {
@@ -44,11 +48,13 @@ export class LunchGroupService {
 
   async removeUserFromGroup(groupId: string, user: User) {
     const group = await this.lunchGroupModel.findById(groupId);
-    group.users = group.users.filter((participant) => participant._id.toString() !== user._id.toString());
+    group.users = group.users.filter(
+      (participant) => participant._id.toString() !== user._id.toString(),
+    );
     return group.save();
   }
 
   getUserLunchGroups(userId: string) {
-    return this.lunchGroupModel.find({ users: { $in: [userId] } }).populate('users restaurant owner');
+    return this.lunchGroupModel.find({ $or: [{ users: { $in: [userId] } }, { owner: userId }] });
   }
 }
