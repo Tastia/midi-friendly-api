@@ -1,7 +1,8 @@
+import { Invitation, InvitationSchema } from '@schemas/invitation.schema';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { OrganizationModule } from './../organization/organization.module';
-import { UserModule } from './../user/user.module';
+import { OrganizationModule } from '@modules/organization/organization.module';
+import { UserModule } from '@modules/user/user.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -19,7 +20,10 @@ import { User, UserSchema } from '@schemas/user.schema';
       }),
       inject: [ConfigService],
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Invitation.name, schema: InvitationSchema },
+    ]),
     UserModule,
     OrganizationModule,
   ],

@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import { User } from './user.schema';
 import { Organization } from './oraganization.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { InvitationUsage } from '@common/types/invitation';
 
 export type InvitationDocument = Invitation & Document;
 
@@ -11,23 +12,26 @@ export class Invitation {
   @Transform(({ value }) => value.toString())
   _id: mongoose.Types.ObjectId;
 
-  @Prop({ default: 1 })
-  maxUsage: number;
+  @Prop({ required: true })
+  type: 'link' | 'email';
 
-  @Prop({ default: 0 })
-  currentUsage: number;
+  @Prop()
+  targetApp: 'client' | 'admin';
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Organization' })
   organization?: Organization;
 
   @Prop({ required: true })
-  targetApp: 'client' | 'admin';
+  expireAt: Date;
 
-  @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }])
-  registeredUsers: User[];
+  @Prop()
+  maxUsage?: number;
 
-  @Prop({ required: true })
-  expiracy: Date;
+  @Prop()
+  emails?: string[];
+
+  @Prop([{ type: InvitationUsage }])
+  usage: InvitationUsage[];
 }
 
 const InvitationSchema = SchemaFactory.createForClass(Invitation);
