@@ -1,3 +1,4 @@
+import { InvitationType, InvitationTargetApp } from './../../common/types/invitation';
 import { UserService } from '@modules/user/user.service';
 import { User, UserDocument } from '@schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
@@ -6,10 +7,17 @@ import { JwtService } from '@nestjs/jwt';
 import { AccessTokenResponse, ActiveAccount, AvailableOrganization } from './auth.type';
 import { OrganizationService } from '@modules/organization/organization.service';
 import { compare } from 'bcrypt';
+import { Invitation, InvitationDocument } from '@schemas/invitation.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { CreateInvitationLinkDto } from './dto/create-invitation-link.dtp';
+import { comparePassword } from '@shared/utils/hash-password';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectModel(Invitation.name)
+    private readonly invitationModel: Model<InvitationDocument>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
@@ -57,6 +65,62 @@ export class AuthService {
       Logger.error(error);
       return null;
     }
+  }
+
+  async createBatchInvitationLink(invitationConfig: CreateInvitationLinkDto) {
+    const invitation = await this.invitationModel.create({
+      type: InvitationType.Link,
+      organization: invitationConfig.organizationId,
+      expireAt: new Date(invitationConfig.expireAt).setHours(23, 59, 59, 999),
+      maxUsage: invitationConfig.maxUsage,
+      targetApp: invitationConfig.targetApp,
+      usage: [],
+    });
+
+    return (
+      this.configService.get<string>(
+        invitationConfig.targetApp === InvitationTargetApp.Admin
+          ? 'app.appUrls.admin'
+          : 'app.appUrls.client',
+      ) + `/invitation/${invitation._id}`
+    );
+  }
+
+  async getInvitationData(invitationId: string, emailHash?: string) {
+    const invitation = await this.invitationModel
+      .findOne({
+        _id: invitationId,
+      })
+      .populate({ path: 'organization', select: 'name' });
+    if (
+      !invitation ||
+      (invitation.type === 'email' &&
+        (!emailHash || !invitation.emails.some((email) => comparePassword(email, emailHash))))
+    )
+      throw new NotFoundException();
+
+    const maxUsageReached = (invitation.usage?.length ?? 0) >= invitation.maxUsage;
+    const alreadyUsed = invitation.usage.some((item) => comparePassword(item.email, emailHash));
+    const expired = invitation.expireAt < new Date();
+
+    if (maxUsageReached || alreadyUsed || expired)
+      return {
+        success: false,
+        maxUsageReached,
+        alreadyUsed,
+        expired,
+      };
+
+    return {
+      success: true,
+      invitation: {
+        _id: invitation._id,
+        type: invitation.type,
+        ...(invitation.targetApp === InvitationTargetApp.Client && {
+          organization: invitation.organization,
+        }),
+      },
+    };
   }
 
   protected getActiveAccountInfo(user: UserDocument): ActiveAccount {
