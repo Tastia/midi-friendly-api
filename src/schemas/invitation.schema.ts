@@ -1,9 +1,8 @@
 import mongoose, { Document } from 'mongoose';
 import { Transform } from 'class-transformer';
-import { User } from './user.schema';
 import { Organization } from './oraganization.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { InvitationUsage } from '@common/types/invitation';
+import { InvitationUsage } from '@common/types/auth';
 
 export type InvitationDocument = Invitation & Document;
 

@@ -1,4 +1,9 @@
-import { InvitationType, InvitationTargetApp } from './../../common/types/invitation';
+import {
+  InvitationType,
+  InvitationTargetApp,
+  AuthPayload,
+  EmailCredentials,
+} from '@common/types/auth';
 import { UserService } from '@modules/user/user.service';
 import { User, UserDocument } from '@schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
@@ -122,6 +127,8 @@ export class AuthService {
       },
     };
   }
+
+  async acceptInvitation(invitationId: string, email: string) {}
 
   protected getActiveAccountInfo(user: UserDocument): ActiveAccount {
     const { _id, firstName, lastName, email } = user;
