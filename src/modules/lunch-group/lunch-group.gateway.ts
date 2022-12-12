@@ -357,7 +357,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
   })
   emitUpdateGroup(eventTarget: BroadcastOperator<EventsMap, any> | Socket, group: LunchGroup) {
     return eventTarget.emit(LunchGroupEmittedEvents.updateGroup, {
-      group,
+      groupData: group,
       groupId: group._id.toString(),
     });
   }
