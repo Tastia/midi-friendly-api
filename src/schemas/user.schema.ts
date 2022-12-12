@@ -3,22 +3,28 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
 import { Exclude, Transform } from 'class-transformer';
 import { hashPassword } from '@shared/utils/hash-password';
+import { ApiProperty } from '@nestjs/swagger';
 export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
 export class User {
+  @ApiProperty({ type: String })
   @Transform(({ value }) => value.toString())
   _id: mongoose.Types.ObjectId;
 
+  @ApiProperty()
   @Prop()
   firstName: string;
 
+  @ApiProperty()
   @Prop()
   lastName: string;
 
+  @ApiProperty()
   @Prop()
   email: string;
 
+  @ApiProperty()
   @Prop()
   avatar?: string;
 
