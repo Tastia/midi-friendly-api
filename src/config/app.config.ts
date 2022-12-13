@@ -15,4 +15,8 @@ export default registerAs('app', () => ({
   websocket: {
     port: parseInt(process.env.WEBSOCKET_PORT, 10) || 8080,
   },
+  appUrls: {
+    client: process.env.CLIENT_APP_URL,
+    admin: process.env.ADMIN_APP_URL,
+  },
 }));

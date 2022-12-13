@@ -1,29 +1,53 @@
+import { InviteUsersByEmailDto } from './dto/invite-users-by-email.dto';
+import { AuthProviders, ProviderCredentials, RegisterAccountPayload } from '@common/types/auth';
+import { InvitationType, InvitationTargetApp, AuthPayload } from '@common/types/auth';
 import { UserService } from '@modules/user/user.service';
 import { User, UserDocument } from '@schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AccessTokenResponse, ActiveAccount, AvailableOrganization } from './auth.type';
 import { OrganizationService } from '@modules/organization/organization.service';
 import { compare } from 'bcrypt';
+import { Invitation, InvitationDocument } from '@schemas/invitation.schema';
+import { Model, Types } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { CreateInvitationLinkDto } from './dto/create-invitation-link.dto';
+import { comparePassword, hashPassword } from '@shared/utils/hash-password';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { QueueEmailsOperation, Queues } from '@common/types/queue.type';
+import { QueueService } from '@modules/services/queue/queue.service';
+import { ValidateInvitationDto } from './dto/validate-invitation.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectModel(Invitation.name)
+    private readonly invitationModel: Model<InvitationDocument>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly organizationService: OrganizationService,
+    private readonly queueService: QueueService,
   ) {}
 
-  /**
-   * Validate login name and password
-   * @param email
-   * @param password
-   */
-  async validate(email: string, password: string): Promise<User> {
-    const account = await this.userService.findOneByEmailWithPassword(email);
-    if (account && (await compare(password, account.password))) return account;
+  async validate(payload: AuthPayload): Promise<UserDocument> {
+    const account = await this.userService.findOneByEmailWithSecret(payload.email, payload.type);
+    if (
+      account &&
+      account.credentials.type === 'email' &&
+      payload.type === 'email' &&
+      (await compare(payload.password, account.credentials.password))
+    )
+      return account;
+
+    if (
+      account &&
+      Object.values(AuthProviders).includes(payload.type as AuthProviders) &&
+      (await compare(payload.password, (account.credentials as ProviderCredentials).userId))
+    )
+      return account;
+
     return null;
   }
 
@@ -57,6 +81,154 @@ export class AuthService {
       Logger.error(error);
       return null;
     }
+  }
+
+  async createInvitationLink(invitationConfig: CreateInvitationLinkDto) {
+    const invitation = await (
+      await this.invitationModel.create({
+        type: InvitationType.Link,
+        organization: invitationConfig.organizationId,
+        expireAt: new Date(invitationConfig.expireAt).setHours(23, 59, 59, 999),
+        maxUsage: invitationConfig.maxUsage,
+        targetApp: invitationConfig.targetApp,
+        usage: [],
+      })
+    ).populate('organization');
+
+    return (
+      this.configService.get<string>(
+        invitationConfig.targetApp === InvitationTargetApp.Admin
+          ? 'app.appUrls.admin'
+          : 'app.appUrls.client',
+      ) + `/invitation/${invitation._id}`
+    );
+  }
+
+  async inviteUsersByEmail(invitationConfig: InviteUsersByEmailDto) {
+    const invitation = await this.invitationModel.create({
+      type: InvitationType.Email,
+      organization: invitationConfig.organizationId,
+      expireAt: new Date(invitationConfig.expireAt).setHours(23, 59, 59, 999),
+      targetApp: invitationConfig.targetApp,
+      emails: invitationConfig.emails,
+      usage: [],
+    });
+
+    const rawLink =
+      this.configService.get<string>(
+        invitationConfig.targetApp === InvitationTargetApp.Admin
+          ? 'app.appUrls.admin'
+          : 'app.appUrls.client',
+      ) + `/invitation/${invitation._id}`;
+
+    this.queueService.add({
+      queueName: Queues.MailQueue,
+      jobData: {
+        operation: QueueEmailsOperation.InviteUser,
+        params: invitationConfig.emails.map((email) => ({
+          email,
+          invitationLink: rawLink + `?hash=${encodeURIComponent(hashPassword(email))}`,
+          expireAt: invitationConfig.expireAt,
+          organization: invitation?.organization?.name ?? null,
+        })),
+      },
+    });
+
+    return invitation;
+  }
+
+  async getInvitationData({ invitationId, emailHash }: ValidateInvitationDto) {
+    Logger.debug(`Validating invitation ${invitationId} with email hash ${emailHash}`);
+    const invitation = await this.invitationModel
+      .findOne({
+        _id: invitationId,
+      })
+      .populate({ path: 'organization', select: 'name' });
+
+    Logger.debug(`Invitation found: ${JSON.stringify(invitation, null, 2)}`);
+
+    if (
+      !invitation ||
+      (invitation.type === 'email' &&
+        (!emailHash || !invitation.emails.some((email) => comparePassword(email, emailHash))))
+    )
+      throw new NotFoundException();
+
+    const maxUsageReached = (invitation.usage?.length ?? 0) >= invitation.maxUsage;
+    const alreadyUsed = invitation.usage.some((item) => comparePassword(item.email, emailHash));
+    const expired = invitation.expireAt < new Date();
+
+    if (maxUsageReached || alreadyUsed || expired)
+      return {
+        success: false,
+        maxUsageReached,
+        alreadyUsed,
+        expired,
+      };
+
+    return {
+      success: true,
+      invitation: {
+        _id: invitation._id,
+        type: invitation.type,
+        ...(invitation.targetApp === InvitationTargetApp.Client && {
+          organization: invitation.organization,
+        }),
+      },
+    };
+  }
+
+  async acceptInvitation({ invitationId, emailHash, account }: AcceptInvitationDto) {
+    const invitation = await this.invitationModel
+      .findOne({ _id: invitationId })
+      .populate('organization');
+
+    if (
+      !invitation ||
+      (invitation.type === 'email' &&
+        (!emailHash || !invitation.emails.some((email) => comparePassword(email, emailHash))))
+    )
+      throw new NotFoundException();
+
+    const unhashedEmail = !emailHash
+      ? null
+      : invitation.emails?.find?.((email) => comparePassword(email, emailHash)) ?? '';
+    const maxUsageReached = (invitation.usage?.length ?? 0) >= invitation.maxUsage;
+    const expired = invitation.expireAt < new Date();
+    const alreadyUsed = !emailHash
+      ? false
+      : invitation.usage.some((item) => comparePassword(item.email, emailHash));
+
+    if (maxUsageReached || alreadyUsed || expired)
+      return {
+        success: false,
+        maxUsageReached,
+        alreadyUsed,
+        expired,
+      };
+
+    const user =
+      account.mode === 'link'
+        ? await this.validate(account.linkPayload as AuthPayload)
+        : await this.userService.registerUser(account.registerPayload as RegisterAccountPayload);
+
+    if (!user) throw new NotFoundException('User not found');
+    if (user.organizations.some((org) => org._id === invitation.organization._id))
+      throw new BadRequestException('User already in organization');
+
+    user.organizations.push(invitation.organization);
+    user.markModified('organizations');
+
+    invitation.usage.push({
+      _id: new Types.ObjectId(),
+      linkedAccount: user,
+      usageDate: new Date(),
+      ...(invitation.type === 'email' && { email: unhashedEmail }),
+    });
+    invitation.markModified('usage');
+
+    await Promise.all([user.save(), invitation.save()]);
+    return { success: true };
   }
 
   protected getActiveAccountInfo(user: UserDocument): ActiveAccount {

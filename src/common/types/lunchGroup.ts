@@ -12,7 +12,7 @@ export enum LunchGroupEmittedEvents {
   removeGroup = 'RemoveGroup',
   updateGroup = 'UpdateGroup',
   addUserToGroup = 'AddUserToGroup',
-  removeUserFromGroup = 'RemoveuserFrom group',
+  removeUserFromGroup = 'RemoveUserFromGroup',
 }
 
 export enum LunchGroupReceivedEvents {

@@ -12,6 +12,6 @@ export class AppController {
 
   @Get('/test-ci')
   testCi(): string {
-    return 'test ci';
+    return 'test ci - v2 - finalized';
   }
 }

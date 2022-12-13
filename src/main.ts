@@ -81,7 +81,7 @@ async function bootstrap() {
     .setDefaultContentType('application/json')
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT')
     .addServer('midi-friendly-server', {
-      url: `ws://localhost:${app.get(ConfigService).get('app.port')}/`,
+      url: 'http://localhost:8080', //`http://localhost:${app.get(ConfigService).get('app.port')}/`,
       protocol: 'socket.io',
       protocolVersion: '4',
       description: 'Allows you to connect using the websocket protocol to our Socket.io server.',
