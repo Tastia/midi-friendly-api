@@ -147,7 +147,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     client.join(group._id.toString());
 
-    this.emitAddGroup(client.broadcast.to(organization._id.toString()), group);
+    this.emitAddGroup(this.server.to(organization._id.toString()), group);
   }
 
   @WsAuth()
