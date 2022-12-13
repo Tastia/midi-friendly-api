@@ -37,7 +37,12 @@ export type QueueMapsPayload<T = any> = _BaseQueuePayload<QueueMapsOperation> & 
 
 export type QueueMailPayload<T = any> = _BaseQueuePayload<QueueEmailsOperation> & {
   params: T extends QueueEmailsOperation.InviteUser
-    ? Array<{ email: string; invitationLink: string; expireAt: Date | string }>
+    ? Array<{
+        email: string;
+        invitationLink: string;
+        expireAt: Date | string;
+        organization: string | null;
+      }>
     : Record<string, unknown>;
 };
 

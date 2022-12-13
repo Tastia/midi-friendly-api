@@ -83,14 +83,16 @@ export class AuthService {
   }
 
   async createInvitationLink(invitationConfig: CreateInvitationLinkDto) {
-    const invitation = await this.invitationModel.create({
-      type: InvitationType.Link,
-      organization: invitationConfig.organizationId,
-      expireAt: new Date(invitationConfig.expireAt).setHours(23, 59, 59, 999),
-      maxUsage: invitationConfig.maxUsage,
-      targetApp: invitationConfig.targetApp,
-      usage: [],
-    });
+    const invitation = await (
+      await this.invitationModel.create({
+        type: InvitationType.Link,
+        organization: invitationConfig.organizationId,
+        expireAt: new Date(invitationConfig.expireAt).setHours(23, 59, 59, 999),
+        maxUsage: invitationConfig.maxUsage,
+        targetApp: invitationConfig.targetApp,
+        usage: [],
+      })
+    ).populate('organization');
 
     return (
       this.configService.get<string>(
@@ -126,6 +128,7 @@ export class AuthService {
           email,
           invitationLink: rawLink + `?hash=${encodeURIComponent(hashPassword(email))}`,
           expireAt: invitationConfig.expireAt,
+          organization: invitation?.organization?.name ?? null,
         })),
       },
     });
