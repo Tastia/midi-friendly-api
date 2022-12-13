@@ -17,5 +17,5 @@ export class UserDto {
   avatar?: string;
 
   @ApiProperty()
-  organizations: string[];
+  isOnline: boolean;
 }

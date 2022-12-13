@@ -87,8 +87,15 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     LunchGroupGateway.userSockets.set(user._id.toString(), client);
     client.join(organization._id.toString());
 
-    const connectedUsers = await this.GetOnlineOrganizationUsers(organization._id.toString());
     const lunchGroups = await this.lunchGroupService.find({ organization: organization._id });
+    const connectedUsers = (
+      await this.userService.find({
+        organizations: { $elemMatch: { organization: organization._id } },
+      })
+    ).map(({ organizations, ...user }) => ({
+      ...user,
+      isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
+    }));
 
     for (const group of lunchGroups.filter(
       (group) =>
@@ -99,7 +106,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     }
 
-    this.emitUserConnected(client.broadcast.to(organization._id.toString()), user);
+    this.emitUserConnected(client.broadcast.to(organization._id.toString()), user._id.toString());
     this.emitSetUserList(client, connectedUsers);
     this.emitSetGroupList(client, lunchGroups);
   }
@@ -287,8 +294,8 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       },
     },
   })
-  emitUserConnected(eventTarget: BroadcastOperator<EventsMap, any> | Socket, user: User) {
-    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, { user });
+  emitUserConnected(eventTarget: BroadcastOperator<EventsMap, any> | Socket, userId: string) {
+    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, { userId });
   }
 
   @AsyncApiSub({
@@ -315,7 +322,10 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       },
     },
   })
-  emitSetUserList(eventTarget: BroadcastOperator<EventsMap, any> | Socket, users: User[]) {
+  emitSetUserList(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    users: Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
+  ) {
     return eventTarget.emit(LunchGroupEmittedEvents.setUserList, { users });
   }
 
