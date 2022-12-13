@@ -10,6 +10,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '@schemas/user.schema';
+import { BullModule } from '@nestjs/bull';
+import { Queues } from '@common/types/queue.type';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { User, UserSchema } from '@schemas/user.schema';
       { name: User.name, schema: UserSchema },
       { name: Invitation.name, schema: InvitationSchema },
     ]),
+    BullModule.registerQueue({ name: Queues.MailQueue }),
     UserModule,
     OrganizationModule,
   ],
