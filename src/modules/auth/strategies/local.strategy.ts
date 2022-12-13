@@ -7,9 +7,9 @@ import { User } from '@schemas/user.schema';
 import { Request } from 'express';
 
 @Injectable()
-export class LocalStrategy extends PassportStrategy(Strategy) {
+export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
   constructor(private authService: AuthService) {
-    super({ usernameField: 'email', passReqToCallback: true });
+    super();
   }
 
   async validate(request: Request): Promise<User> {
