@@ -25,4 +25,4 @@ module.exports = {
   shorthandCSS: true,
   removeUnusedCSS: true,
   prettify: true,
-}
+};

@@ -20,7 +20,7 @@ export enum QueueMapsOperation {
 }
 
 export enum QueueEmailsOperation {
-  InviteUser = 'inviteUser',
+  InviteUser = 'invitation',
   ConfirmOrganizationCreation = 'confirmOrganizationCreation',
 }
 

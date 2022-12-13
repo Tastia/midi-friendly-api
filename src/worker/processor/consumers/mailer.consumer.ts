@@ -29,7 +29,7 @@ export class MailerConsumer {
   @Process()
   async transcode(job: Job<QueueMailPayload>) {
     const { operation, operationId } = job.data;
-    const queueJob = await this.queueJobService.findJobById(job.data.operationId);
+    const queueJob = await this.queueJobService.findJobById(operationId);
 
     try {
       switch (operation) {
@@ -49,8 +49,8 @@ export class MailerConsumer {
   ) {
     const { params } = job.data;
 
-    const [restaurants] = await rateLimitPromiseQueue(
-      params.map((location) => async () => console.log('test')),
+    const [messages] = await rateLimitPromiseQueue(
+      params.map((email) => async () => console.log('test')),
       {
         concurrency: 1,
         interval: 1100,
