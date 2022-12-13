@@ -1,0 +1,13 @@
+<script props>
+  module.exports = {
+    icon: props.icon,
+    class: props.class || '',
+  }
+</script>
+
+<if condition="icon">
+    <span class="iconify {{ class }}" data-icon="{{ icon }}" />
+</if>
+<else>
+    <div class="text-red-500">NO ICON SELECTED - PLEASE FILL ICON PROP</div>
+</else>

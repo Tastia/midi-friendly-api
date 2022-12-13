@@ -25,6 +25,7 @@
   "dependencies": {
     "@asyncapi/generator": "^1.9.13",
     "@googlemaps/google-maps-services-js": "^3.3.16",
+    "@maizzle/framework": "^4.4.0-beta.5",
     "@nestjs/bull": "^0.6.2",
     "@nestjs/cli": "^9.0.0",
     "@nestjs/common": "^9.0.0",
@@ -45,6 +46,7 @@
     "bull": "^4.10.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
+    "handlebars": "^4.7.7",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.7.2",
     "nest-aws-sdk": "^3.0.0",
