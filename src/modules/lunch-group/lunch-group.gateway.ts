@@ -221,7 +221,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
     await this.lunchGroupService.delete(groupId);
     this.DeleteLocalGroup(groupId);
-    this.emitRemoveGroup(client.broadcast.to(organization._id.toString()), { groupId });
+    this.emitRemoveGroup(this.server.to(organization._id.toString()), { groupId });
   }
 
   @WsAuth()
@@ -246,7 +246,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
     await this.lunchGroupService.addUserToGroup(groupId, user);
     this.AddUserToLocalGroup(user._id.toString(), groupId);
-    this.emitAddUserToGroup(client.broadcast.to(organization._id.toString()), {
+    this.emitAddUserToGroup(this.server.to(organization._id.toString()), {
       groupId,
       userId: user._id.toString(),
     });
@@ -274,7 +274,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     await this.lunchGroupService.removeUserFromGroup(groupId, user);
 
     this.RemoveUserFromLocaleGroup(user._id.toString(), groupId);
-    this.emitRemoveUserFromGroup(client.broadcast.to(organization._id.toString()), {
+    this.emitRemoveUserFromGroup(this.server.to(organization._id.toString()), {
       groupId,
       userId: user._id.toString(),
     });
