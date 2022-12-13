@@ -88,14 +88,16 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     client.join(organization._id.toString());
 
     const connectedUsers = await this.GetOnlineOrganizationUsers(organization._id.toString());
-    const lunchGroups = await (
-      await this.lunchGroupService.getUserLunchGroups(user._id.toString())
-    ).filter((group) => group.organization._id.toString() === organization._id.toString());
+    const lunchGroups = await this.lunchGroupService.find({ organization: organization._id });
 
-    lunchGroups.forEach((group) => {
+    for (const group of lunchGroups.filter(
+      (group) =>
+        group.users.some((userId) => userId.toString() === user._id.toString()) ||
+        group.owner.toString() === user._id.toString(),
+    )) {
       client.join(group._id.toString());
       this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
-    });
+    }
 
     this.emitUserConnected(client.broadcast.to(organization._id.toString()), user);
     this.emitSetUserList(client, connectedUsers);
@@ -147,7 +149,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     client.join(group._id.toString());
 
-    this.emitAddGroup(client.broadcast.to(organization._id.toString()), group);
+    this.emitAddGroup(this.server.to(organization._id.toString()), group);
   }
 
   @WsAuth()
