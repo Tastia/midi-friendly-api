@@ -4,6 +4,7 @@ import { Address } from '@common/types/address';
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { Client, Place } from '@googlemaps/google-maps-services-js';
 import { ExceptionHandler } from 'winston';
+import { rateLimitPromiseQueue } from '@shared/utils/rate-limit-promise-queue';
 
 @Injectable()
 export class GoogleMapsService {
@@ -160,7 +161,7 @@ export class GoogleMapsService {
         timeout: 1000000,
       }).then((data) => data.data.results);
 
-      const [restaurants] = await this.rateLimitPromiseQueue<BaseRestaurant>(
+      const [restaurants] = await rateLimitPromiseQueue<BaseRestaurant>(
         locations.map((location) => () => this.mapRestaurantFullData(location)),
         { concurrency: 1, interval: 1000, runsPerInterval: 2 },
       );
@@ -175,44 +176,6 @@ export class GoogleMapsService {
         err?.response?.data?.error_message ?? 'Unexpected GMAPS unknown error',
       );
     }
-  }
-
-  async rateLimitPromiseQueue<T>(
-    promises: Array<(options?: { signal?: AbortSignal }) => Promise<T>>,
-    options: { concurrency: number; interval: number; runsPerInterval: number },
-  ): Promise<[T[], any[]]> {
-    return new Promise(async (resolve, reject) => {
-      Logger.debug(
-        `Rate limiting ${promises.length} promises with concurrency ${options.concurrency} and interval ${options.interval}ms`,
-        'GoogleMapsService.rateLimitPromiseQueue',
-      );
-      try {
-        const PQueue = (await import('p-queue')).default;
-        const success = [];
-        const errors = [];
-        const queue = new PQueue({
-          concurrency: options.concurrency,
-          interval: options.interval,
-          intervalCap: options.runsPerInterval,
-        });
-
-        queue.on('error', (error) =>
-          Logger.error(error, 'GoogleMapsService.rateLimitPromiseQueue'),
-        );
-        queue.on('completed', (result) => {
-          success.push(result);
-          Logger.debug(
-            `Promise completed, ${queue.size} remaining, ${queue.pending} pending`,
-            'GoogleMapsService.rateLimitPromiseQueue',
-          );
-        });
-        queue.on('empty', () => resolve([success, errors]));
-        queue.on('error', (error) => errors.push(error));
-        queue.addAll(promises);
-      } catch (err) {
-        reject(err);
-      }
-    });
   }
 
   serveImageFromGMapsRef(reference: string, options?: { maxWidth?: number; maxLength?: number }) {

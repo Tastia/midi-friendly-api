@@ -64,8 +64,6 @@ export class QueueService {
       params: jobData.params,
     });
 
-    // VALIDATE PAYLOAD, INJECT IT PROPERLY
-
     const param = { ...jobData, operationId: queueJob._id.toString() };
     return queue.add(param) as unknown as Promise<BooleanOperationResult>;
   }

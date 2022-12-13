@@ -131,32 +131,32 @@ export class QueueController {
     }
   }
 
-  @Post('add')
-  @ApiOperation({
-    summary: 'Add assessment',
-    description: 'Add assessment to the queue',
-  })
-  @ApiOkResponse({
-    description: 'Success',
-    type: BooleanOperationResult,
-    isArray: false,
-  })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  @ApiBearerAuth('JWT')
-  // @Policy('admin.processingQueues.update')
-  async add(
-    @Body(new ValidationPipe({ transform: true })) params: AddToQueueDto,
-  ): Promise<BooleanOperationResult> {
-    try {
-      if (!(<any>Object).values(Queues).includes(params.queueName)) {
-        throw new BadRequestException(`Unknown queue name: '${params.queueName}'`);
-      }
-      const queue = params.queueName as Queues;
-      Logger.debug(`Adding to queue ${queue}`);
-      return this.queueService.add(params);
-    } catch (e) {
-      Logger.error(e);
-      throw e;
-    }
-  }
+  // @Post('add')
+  // @ApiOperation({
+  //   summary: 'Add assessment',
+  //   description: 'Add assessment to the queue',
+  // })
+  // @ApiOkResponse({
+  //   description: 'Success',
+  //   type: BooleanOperationResult,
+  //   isArray: false,
+  // })
+  // @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  // @ApiBearerAuth('JWT')
+  // // @Policy('admin.processingQueues.update')
+  // async add(
+  //   @Body(new ValidationPipe({ transform: true })) params: AddToQueueDto,
+  // ): Promise<BooleanOperationResult> {
+  //   try {
+  //     if (!(<any>Object).values(Queues).includes(params.queueName)) {
+  //       throw new BadRequestException(`Unknown queue name: '${params.queueName}'`);
+  //     }
+  //     const queue = params.queueName as Queues;
+  //     Logger.debug(`Adding to queue ${queue}`);
+  //     return this.queueService.add(params);
+  //   } catch (e) {
+  //     Logger.error(e);
+  //     throw e;
+  //   }
+  // }
 }

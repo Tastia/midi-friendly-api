@@ -1,3 +1,4 @@
+import { QueueModule } from '@modules/services/queue/queue.module';
 import { Invitation, InvitationSchema } from '@schemas/invitation.schema';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -29,6 +30,7 @@ import { Queues } from '@common/types/queue.type';
     BullModule.registerQueue({ name: Queues.MailQueue }),
     UserModule,
     OrganizationModule,
+    QueueModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],

@@ -15,9 +15,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CreateInvitationLinkDto } from './dto/create-invitation-link.dto';
 import { comparePassword, hashPassword } from '@shared/utils/hash-password';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
-import { InjectQueue } from '@nestjs/bull';
-import { Queues } from '@common/types/queue.type';
-import { Queue } from 'bull';
+import { QueueEmailsOperation, Queues } from '@common/types/queue.type';
+import { QueueService } from '@modules/services/queue/queue.service';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +27,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly organizationService: OrganizationService,
-    @InjectQueue(Queues.MailQueue) private readonly mailQueue: Queue,
+    private readonly queueService: QueueService,
   ) {}
 
   async validate(payload: AuthPayload): Promise<UserDocument> {
@@ -119,14 +118,16 @@ export class AuthService {
           : 'app.appUrls.client',
       ) + `/invitation/${invitation._id}`;
 
-    // TODO: Add queue handler
-    this.mailQueue.add({
-      key: 'invitation',
-      payload: invitationConfig.emails.map((email) => ({
-        email,
-        invitationLink: rawLink + `?hash=${encodeURIComponent(hashPassword(email))}`,
-        expireAt: invitationConfig.expireAt,
-      })),
+    this.queueService.add({
+      queueName: Queues.MailQueue,
+      jobData: {
+        operation: QueueEmailsOperation.InviteUser,
+        params: invitationConfig.emails.map((email) => ({
+          email,
+          invitationLink: rawLink + `?hash=${encodeURIComponent(hashPassword(email))}`,
+          expireAt: invitationConfig.expireAt,
+        })),
+      },
     });
 
     return invitation;
