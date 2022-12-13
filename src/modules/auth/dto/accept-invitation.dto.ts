@@ -1,6 +1,6 @@
 import { LinkAccountPayload, RegisterAccountPayload } from '@common/types/auth';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class AccountPayload {
@@ -29,7 +29,8 @@ export class AcceptInvitationDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  emailHash: string;
+  @Transform(({ value }) => (value ? decodeURIComponent(value) : undefined))
+  emailHash?: string;
 
   @ApiProperty()
   @ValidateNested()

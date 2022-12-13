@@ -69,7 +69,6 @@ export interface AuthPayload {
 export class LinkAccountPayload {
   @ApiProperty()
   @IsString()
-  @IsEmail()
   type: `${AuthProviders}` | 'email';
 
   @ApiProperty()

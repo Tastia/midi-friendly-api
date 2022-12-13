@@ -1,4 +1,4 @@
-import { InviteUsersByEmail } from './dto/invite-users-by-email.dto';
+import { InviteUsersByEmailDto } from './dto/invite-users-by-email.dto';
 import { AuthProviders, ProviderCredentials, RegisterAccountPayload } from '@common/types/auth';
 import { InvitationType, InvitationTargetApp, AuthPayload } from '@common/types/auth';
 import { UserService } from '@modules/user/user.service';
@@ -17,6 +17,7 @@ import { comparePassword, hashPassword } from '@shared/utils/hash-password';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { QueueEmailsOperation, Queues } from '@common/types/queue.type';
 import { QueueService } from '@modules/services/queue/queue.service';
+import { ValidateInvitationDto } from './dto/validate-invitation.dto';
 
 @Injectable()
 export class AuthService {
@@ -103,7 +104,7 @@ export class AuthService {
     );
   }
 
-  async inviteUsersByEmail(invitationConfig: InviteUsersByEmail) {
+  async inviteUsersByEmail(invitationConfig: InviteUsersByEmailDto) {
     const invitation = await this.invitationModel.create({
       type: InvitationType.Email,
       organization: invitationConfig.organizationId,
@@ -136,12 +137,16 @@ export class AuthService {
     return invitation;
   }
 
-  async getInvitationData(invitationId: string, emailHash?: string) {
+  async getInvitationData({ invitationId, emailHash }: ValidateInvitationDto) {
+    Logger.debug(`Validating invitation ${invitationId} with email hash ${emailHash}`);
     const invitation = await this.invitationModel
       .findOne({
         _id: invitationId,
       })
       .populate({ path: 'organization', select: 'name' });
+
+    Logger.debug(`Invitation found: ${JSON.stringify(invitation, null, 2)}`);
+
     if (
       !invitation ||
       (invitation.type === 'email' &&
@@ -185,11 +190,14 @@ export class AuthService {
     )
       throw new NotFoundException();
 
-    const unhashedEmail =
-      invitation.emails?.find?.((email) => comparePassword(email, emailHash)) ?? '';
+    const unhashedEmail = !emailHash
+      ? null
+      : invitation.emails?.find?.((email) => comparePassword(email, emailHash)) ?? '';
     const maxUsageReached = (invitation.usage?.length ?? 0) >= invitation.maxUsage;
-    const alreadyUsed = invitation.usage.some((item) => comparePassword(item.email, emailHash));
     const expired = invitation.expireAt < new Date();
+    const alreadyUsed = !emailHash
+      ? false
+      : invitation.usage.some((item) => comparePassword(item.email, emailHash));
 
     if (maxUsageReached || alreadyUsed || expired)
       return {
