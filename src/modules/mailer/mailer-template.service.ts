@@ -24,7 +24,7 @@ export class MailerTemplateService {
     const { title, text } = this.getTemplateMeta(rawTemplate);
 
     const Maizzle = await import('@maizzle/framework');
-    const { html, config } = await Maizzle.render(rawTemplate, {
+    const { html } = await Maizzle.render(rawTemplate, {
       tailwind: {
         config: await this.getTailwindConfig(),
         css: this.getBaseMaizzleCss(),
@@ -53,18 +53,10 @@ export class MailerTemplateService {
       },
     });
 
-    const renderedHtml = this.renderHandlebars(html, templateData);
-    fs.writeFileSync(
-      path.join(this.emailsRootPath, `src/content/${templateKey}.html`),
-      renderedHtml,
-      'utf8',
-    );
-
     return {
       html: this.renderHandlebars(html, templateData),
       text: this.renderHandlebars(text || 'ERROR: TEXT COULD NOT BE RENDERED', templateData),
       subject: this.renderHandlebars(title || 'ERROR: TITLE COULD NOT BE RENDERED', templateData),
-      twConfig: await this.getTailwindConfig(),
     };
   }
 
