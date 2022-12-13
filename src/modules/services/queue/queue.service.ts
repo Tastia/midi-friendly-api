@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Queues } from '@common/types/queue.type';
+import { Queues, QueuesPayload } from '@common/types/queue.type';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { QueueStatusDto } from './dto/queue-status.dto';
@@ -15,38 +15,21 @@ export class QueueService {
     private readonly queueJobService: QueueJobService,
   ) {}
 
-  /**
-   * Start paused queue
-   * @param queueName
-   */
   async resume(queueName: Queues): Promise<BooleanOperationResult> {
     await this.getQueue(queueName).resume(false);
     return { success: true };
   }
 
-  /**
-   * Stop/Pause given queue
-   * @param queueName
-   */
   async pause(queueName: Queues): Promise<BooleanOperationResult> {
     await this.getQueue(queueName).pause(false);
     return { success: true };
   }
 
-  /**
-   * Clear all jobs from a given queue
-   * @param queueName
-   */
   async clear(queueName: Queues): Promise<BooleanOperationResult> {
     await this.getQueue(queueName).empty();
     return { success: true };
   }
 
-  /**
-   * Get queue by name
-   * @param queueName
-   * @private
-   */
   private getQueue(queueName: Queues): Queue {
     switch (queueName) {
       case Queues.MapsQueue:
@@ -56,10 +39,6 @@ export class QueueService {
     }
   }
 
-  /**
-   * get Que status given queue
-   * @param queueName
-   */
   async getStatus(queueName: Queues): Promise<QueueStatusDto> {
     const test = await this.getQueue(queueName).isPaused();
     const queue = await this.getQueue(queueName);
@@ -71,11 +50,10 @@ export class QueueService {
     } as QueueStatusDto;
   }
 
-  /**
-   * Add assessment to the queue
-   * @param data
-   */
-  async add(data: AddToQueueDto) {
+  async add<T extends Queues>(data: {
+    queueName: T;
+    jobData: Omit<QueuesPayload<T>, 'operationId'>;
+  }) {
     const { queueName, jobData } = data;
     const queue = await this.getQueue(queueName);
     if (!queue) throw new BadRequestException('Unknown queue ' + queueName);

@@ -45,6 +45,8 @@ export class MapsConsumer {
       switch (operation) {
         case QueueMapsOperation.GetOrganizationRestaurants:
           return await this.retriveOrganizationRestaurants(job as any, queueJob);
+        default:
+          throw new Error(`Operation ${operation} not supported`);
       }
     } catch (err) {
       return this.queueJobService.handleJobCompletion(queueJob, QueueJobStatus.Failed, err);
