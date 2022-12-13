@@ -1,4 +1,4 @@
-import { EmailCredentials, FacebookCredentials, GoogleCredentials } from '@common/types/auth';
+import { EmailCredentials, ProviderCredentials } from '@common/types/auth';
 import { Organization } from './oraganization.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
@@ -29,7 +29,7 @@ export class User {
   organizations: Organization[];
 
   @Prop({ type: Object, required: true })
-  credentials: EmailCredentials | GoogleCredentials | FacebookCredentials;
+  credentials: EmailCredentials | ProviderCredentials;
 
   email: string;
 }
@@ -44,6 +44,11 @@ UserSchema.pre<UserDocument>('save', function (next) {
   if (this.isModified('credentials.password'))
     (this.credentials as EmailCredentials).password = hashPassword(
       (this.credentials as EmailCredentials).password,
+    );
+
+  if (this.isModified('credentials.userId'))
+    (this.credentials as ProviderCredentials).userId = hashPassword(
+      (this.credentials as ProviderCredentials).userId,
     );
 
   next();

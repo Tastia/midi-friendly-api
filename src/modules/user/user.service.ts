@@ -1,3 +1,5 @@
+import { Invitation } from '@schemas/invitation.schema';
+import { RegisterAccountPayload, LinkAccountPayload } from './../../common/types/auth';
 import { OrganizationService } from '@modules/organization/organization.service';
 import { PopulateQuery } from '@common/types/mongoose';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
@@ -41,10 +43,35 @@ export class UserService {
     return this.userModel.findOne(filter ?? {}).populate(populate ?? ('' as any));
   }
 
-  async findOneByEmailWithPassword(email: string) {
+  findOneByEmailWithSecret(email: string, credentialType: 'email' | 'google' | 'facebook') {
     return this.userModel
-      .findOne({ 'credentials.email': { $regex: this.escapeRegExp(email), $options: 'i' } })
-      .populate('password');
+      .findOne({
+        'credentials.email': { $regex: this.escapeRegExp(email), $options: 'i' },
+        'credentials.type': credentialType,
+      })
+      .populate(['credentials.password', 'credentials.userId', 'organizations']);
+  }
+
+  async registerUser(payload: RegisterAccountPayload) {
+    const credentialsExist = await this.userModel.findOne({
+      'credentials.email': payload.email,
+      'credentials.type': payload.type,
+    });
+
+    if (credentialsExist) throw new BadRequestException('User already exists');
+
+    return this.userModel.create({
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      avatar: payload.avatar,
+      credentials: {
+        type: payload.type,
+        email: payload.email,
+        ...(payload.type === 'email' && { password: payload.password }),
+        ...(payload.type !== 'email' && { userId: payload.userId }),
+      },
+      organizations: [],
+    });
   }
 
   private escapeRegExp(string) {

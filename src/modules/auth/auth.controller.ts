@@ -25,4 +25,12 @@ export class AuthController {
   ): Promise<AccessTokenResponse> {
     return this.authService.login(user);
   }
+
+  // @Post('validate-invitation/:invitationId')
+  // @ApiOperation({ summary: 'Validate invitation & get invitation data' })
+  // @ApiOkResponse({
+  //   description: 'Success',
+  // })
+  // @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  // validateInvitation() {}
 }

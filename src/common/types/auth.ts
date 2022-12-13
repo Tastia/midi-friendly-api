@@ -1,7 +1,9 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Prop } from '@nestjs/mongoose';
 import { User } from '@schemas/user.schema';
 import { Exclude, Transform } from 'class-transformer';
 import mongoose from 'mongoose';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export enum InvitationType {
   Link = 'link',
@@ -13,10 +15,16 @@ export enum InvitationTargetApp {
   Admin = 'admin',
 }
 
+export enum AuthProviders {
+  Google = 'google',
+  Facebook = 'facebook',
+  LinkedIn = 'linkedin',
+}
+
 export class InvitationUsage {
   @Transform(({ value }) => value.toString())
-  @Prop({ required: true, default: () => new mongoose.Types.ObjectId() })
-  _id: string;
+  @Prop({ required: true })
+  _id: mongoose.Types.ObjectId;
 
   @Prop({ required: true })
   email?: string;
@@ -39,21 +47,9 @@ export class EmailCredentials {
   password: string;
 }
 
-export class GoogleCredentials {
-  @Prop()
-  type: 'google';
-
-  @Prop()
-  email: string;
-
-  @Prop({ type: String, select: false })
-  @Exclude()
-  userId: string;
-}
-
-export class FacebookCredentials {
-  @Prop()
-  type: 'facebook';
+export class ProviderCredentials {
+  @Prop({ enum: AuthProviders })
+  type: AuthProviders;
 
   @Prop()
   email: string;
@@ -68,4 +64,41 @@ export interface AuthPayload {
   email: string;
   password?: string;
   userId?: string;
+}
+
+export class LinkAccountPayload {
+  @ApiProperty()
+  @IsString()
+  @IsEmail()
+  type: `${AuthProviders}` | 'email';
+
+  @ApiProperty()
+  @IsString()
+  @IsEmail()
+  email: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  password?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  userId?: string;
+}
+
+export class RegisterAccountPayload extends LinkAccountPayload {
+  @ApiProperty()
+  @IsString()
+  firstName: string;
+
+  @ApiProperty()
+  @IsString()
+  lastName: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 }

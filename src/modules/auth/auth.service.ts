@@ -1,22 +1,23 @@
-import {
-  InvitationType,
-  InvitationTargetApp,
-  AuthPayload,
-  EmailCredentials,
-} from '@common/types/auth';
+import { InviteUsersByEmail } from './dto/invite-users-by-email.dto';
+import { AuthProviders, ProviderCredentials, RegisterAccountPayload } from '@common/types/auth';
+import { InvitationType, InvitationTargetApp, AuthPayload } from '@common/types/auth';
 import { UserService } from '@modules/user/user.service';
 import { User, UserDocument } from '@schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AccessTokenResponse, ActiveAccount, AvailableOrganization } from './auth.type';
 import { OrganizationService } from '@modules/organization/organization.service';
 import { compare } from 'bcrypt';
 import { Invitation, InvitationDocument } from '@schemas/invitation.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { CreateInvitationLinkDto } from './dto/create-invitation-link.dtp';
-import { comparePassword } from '@shared/utils/hash-password';
+import { CreateInvitationLinkDto } from './dto/create-invitation-link.dto';
+import { comparePassword, hashPassword } from '@shared/utils/hash-password';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { InjectQueue } from '@nestjs/bull';
+import { Queues } from '@common/types/queue.type';
+import { Queue } from 'bull';
 
 @Injectable()
 export class AuthService {
@@ -27,15 +28,11 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly organizationService: OrganizationService,
+    @InjectQueue(Queues.MailQueue) private readonly mailQueue: Queue,
   ) {}
 
-  /**
-   * Validate login name and password
-   * @param email
-   * @param password
-   */
-  async validate(payload: AuthPayload): Promise<User> {
-    const account = await this.userService.findOneByEmailWithPassword(payload.email);
+  async validate(payload: AuthPayload): Promise<UserDocument> {
+    const account = await this.userService.findOneByEmailWithSecret(payload.email, payload.type);
     if (
       account &&
       account.credentials.type === 'email' &&
@@ -46,17 +43,8 @@ export class AuthService {
 
     if (
       account &&
-      account.credentials.type === 'google' &&
-      payload.type === 'google' &&
-      (await compare(payload.password, account.credentials.userId))
-    )
-      return account;
-
-    if (
-      account &&
-      account.credentials.type === 'facebook' &&
-      payload.type === 'facebook' &&
-      (await compare(payload.password, account.credentials.userId))
+      Object.values(AuthProviders).includes(payload.type as AuthProviders) &&
+      (await compare(payload.password, (account.credentials as ProviderCredentials).userId))
     )
       return account;
 
@@ -95,7 +83,7 @@ export class AuthService {
     }
   }
 
-  async createBatchInvitationLink(invitationConfig: CreateInvitationLinkDto) {
+  async createInvitationLink(invitationConfig: CreateInvitationLinkDto) {
     const invitation = await this.invitationModel.create({
       type: InvitationType.Link,
       organization: invitationConfig.organizationId,
@@ -112,6 +100,36 @@ export class AuthService {
           : 'app.appUrls.client',
       ) + `/invitation/${invitation._id}`
     );
+  }
+
+  async inviteUsersByEmail(invitationConfig: InviteUsersByEmail) {
+    const invitation = await this.invitationModel.create({
+      type: InvitationType.Email,
+      organization: invitationConfig.organizationId,
+      expireAt: new Date(invitationConfig.expireAt).setHours(23, 59, 59, 999),
+      targetApp: invitationConfig.targetApp,
+      emails: invitationConfig.emails,
+      usage: [],
+    });
+
+    const rawLink =
+      this.configService.get<string>(
+        invitationConfig.targetApp === InvitationTargetApp.Admin
+          ? 'app.appUrls.admin'
+          : 'app.appUrls.client',
+      ) + `/invitation/${invitation._id}`;
+
+    // TODO: Add queue handler
+    this.mailQueue.add({
+      key: 'invitation',
+      payload: invitationConfig.emails.map((email) => ({
+        email,
+        invitationLink: rawLink + `?hash=${encodeURIComponent(hashPassword(email))}`,
+        expireAt: invitationConfig.expireAt,
+      })),
+    });
+
+    return invitation;
   }
 
   async getInvitationData(invitationId: string, emailHash?: string) {
@@ -151,7 +169,55 @@ export class AuthService {
     };
   }
 
-  async acceptInvitation(invitationId: string, email: string) {}
+  async acceptInvitation({ invitationId, emailHash, account }: AcceptInvitationDto) {
+    const invitation = await this.invitationModel
+      .findOne({ _id: invitationId })
+      .populate('organization');
+
+    if (
+      !invitation ||
+      (invitation.type === 'email' &&
+        (!emailHash || !invitation.emails.some((email) => comparePassword(email, emailHash))))
+    )
+      throw new NotFoundException();
+
+    const unhashedEmail =
+      invitation.emails?.find?.((email) => comparePassword(email, emailHash)) ?? '';
+    const maxUsageReached = (invitation.usage?.length ?? 0) >= invitation.maxUsage;
+    const alreadyUsed = invitation.usage.some((item) => comparePassword(item.email, emailHash));
+    const expired = invitation.expireAt < new Date();
+
+    if (maxUsageReached || alreadyUsed || expired)
+      return {
+        success: false,
+        maxUsageReached,
+        alreadyUsed,
+        expired,
+      };
+
+    const user =
+      account.mode === 'link'
+        ? await this.validate(account.linkPayload as AuthPayload)
+        : await this.userService.registerUser(account.registerPayload as RegisterAccountPayload);
+
+    if (!user) throw new NotFoundException('User not found');
+    if (user.organizations.some((org) => org._id === invitation.organization._id))
+      throw new BadRequestException('User already in organization');
+
+    user.organizations.push(invitation.organization);
+    user.markModified('organizations');
+
+    invitation.usage.push({
+      _id: new Types.ObjectId(),
+      linkedAccount: user,
+      usageDate: new Date(),
+      ...(invitation.type === 'email' && { email: unhashedEmail }),
+    });
+    invitation.markModified('usage');
+
+    await Promise.all([user.save(), invitation.save()]);
+    return { success: true };
+  }
 
   protected getActiveAccountInfo(user: UserDocument): ActiveAccount {
     const { _id, firstName, lastName, email } = user;
