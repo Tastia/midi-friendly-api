@@ -18,12 +18,14 @@ import { Job } from 'bull';
 import { Logger } from '@nestjs/common';
 import { QueueJobService } from '@modules/services/queue-job/queue-job.service';
 import { rateLimitPromiseQueue } from '@shared/utils/rate-limit-promise-queue';
+import { MailerService } from '@modules/mailer/mailer.service';
 
 @Processor(Queues.MailQueue)
 export class MailerConsumer {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly queueJobService: QueueJobService,
+    private readonly mailerService: MailerService,
   ) {}
 
   @Process()
@@ -47,16 +49,15 @@ export class MailerConsumer {
     job: Job<QueueMailPayload<QueueEmailsOperation.InviteUser>>,
     queueJob: QueueJobDocument,
   ) {
-    const { params } = job.data;
-
-    const [messages] = await rateLimitPromiseQueue(
-      params.map((email) => async () => console.log('test')),
+    await rateLimitPromiseQueue(
+      job.data.params.map((email) => () => this.mailerService.sendInvitationEmail(email)),
       {
         concurrency: 1,
         interval: 1100,
         runsPerInterval: 1,
       },
     );
+    return this.queueJobService.handleJobCompletion(queueJob, QueueJobStatus.Completed);
   }
 
   @OnQueueActive()

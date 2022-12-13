@@ -1,3 +1,4 @@
+import { MailerModule } from './../../modules/mailer/mailer.module';
 import { QueueModule } from '@modules/services/queue/queue.module';
 import { RestaurantModule } from '@modules/restaurant/restaurant.module';
 import { OrganizationModule } from '@modules/organization/organization.module';
@@ -22,6 +23,7 @@ import { User, UserSchema } from '@schemas/user.schema';
     OrganizationModule,
     RestaurantModule,
     QueueModule,
+    MailerModule,
   ],
   providers: [MailerConsumer, MapsConsumer],
   exports: [MailerConsumer, MapsConsumer],

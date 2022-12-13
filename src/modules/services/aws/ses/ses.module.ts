@@ -3,5 +3,6 @@ import { SesService } from './ses.service';
 
 @Module({
   providers: [SesService],
+  exports: [SesService],
 })
 export class SesModule {}

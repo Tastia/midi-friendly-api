@@ -8,6 +8,7 @@ export default registerAs('aws', () => ({
   sesRegion: process.env.AWS_SES_REGION,
   sesAccessKeyId: process.env.AWS_SES_ACCESS_KEY_ID,
   sesSecretAccessKey: process.env.AWS_SES_SECRET_ACCESS_KEY,
+  sesSourceEmail: process.env.AWS_SES_SOURCE_EMAIL,
 
   apiVersion: process.env.AWS_API_VERSION,
   s3Region: process.env.AWS_S3_REGION,
