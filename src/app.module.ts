@@ -1,3 +1,4 @@
+import awsConfig from '@config/aws.config';
 import { LunchGroupModule } from '@modules/lunch-group/lunch-group.module';
 import appConfig from '@config/app.config';
 import { Module } from '@nestjs/common';
@@ -11,12 +12,13 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MailerModule } from './modules/mailer/mailer.module';
 import { AwsSdkModule } from 'nest-aws-sdk';
 import { awsHandlerConfig } from '@modules/services/aws/aws.config';
+import { DevelopModule } from './modules/_develop/_develop.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig],
+      load: [appConfig, awsConfig],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -32,6 +34,7 @@ import { awsHandlerConfig } from '@modules/services/aws/aws.config';
     ServicesModule,
     AuthModule,
     MailerModule,
+    DevelopModule,
   ],
   controllers: [AppController],
   providers: [AppService],
