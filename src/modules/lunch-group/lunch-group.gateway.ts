@@ -88,14 +88,12 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     client.join(organization._id.toString());
 
     const lunchGroups = await this.lunchGroupService.find({ organization: organization._id });
-    const connectedUsers = (
-      await this.userService.find({
-        organizations: { $elemMatch: { organization: organization._id } },
-      })
-    ).map(({ organizations, ...user }) => ({
-      ...user,
-      isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
-    }));
+    const connectedUsers = (await this.userService.find({ organizations: organization._id })).map(
+      ({ organizations, ...user }) => ({
+        ...user,
+        isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
+      }),
+    );
 
     for (const group of lunchGroups.filter(
       (group) =>
