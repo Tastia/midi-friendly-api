@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@asyncapi/generator": "^1.9.13",
+    "@chronicstone/mongoose-search": "^1.0.1",
     "@googlemaps/google-maps-services-js": "^3.3.16",
     "@maizzle/framework": "next",
     "@nestjs/bull": "^0.6.2",
