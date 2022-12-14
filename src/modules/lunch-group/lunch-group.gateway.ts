@@ -105,7 +105,10 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     }
 
     this.emitUserConnected(client.broadcast.to(organization._id.toString()), user._id.toString());
-    this.emitSetUserList(client, connectedUsers);
+    this.emitSetUserList(
+      client,
+      connectedUsers as Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
+    );
     this.emitSetGroupList(client, lunchGroups);
   }
 
