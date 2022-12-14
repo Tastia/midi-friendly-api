@@ -87,8 +87,13 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     LunchGroupGateway.userSockets.set(user._id.toString(), client);
     client.join(organization._id.toString());
 
-    const connectedUsers = await this.GetOnlineOrganizationUsers(organization._id.toString());
     const lunchGroups = await this.lunchGroupService.find({ organization: organization._id });
+    const connectedUsers = (await this.userService.find({ organizations: organization._id })).map(
+      ({ organizations, ...user }) => ({
+        ...user,
+        isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
+      }),
+    );
 
     for (const group of lunchGroups.filter(
       (group) =>
@@ -99,7 +104,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     }
 
-    this.emitUserConnected(client.broadcast.to(organization._id.toString()), user);
+    this.emitUserConnected(client.broadcast.to(organization._id.toString()), user._id.toString());
     this.emitSetUserList(client, connectedUsers);
     this.emitSetGroupList(client, lunchGroups);
   }
@@ -214,7 +219,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
     await this.lunchGroupService.delete(groupId);
     this.DeleteLocalGroup(groupId);
-    this.emitRemoveGroup(client.broadcast.to(organization._id.toString()), { groupId });
+    this.emitRemoveGroup(this.server.to(organization._id.toString()), { groupId });
   }
 
   @WsAuth()
@@ -239,7 +244,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
     await this.lunchGroupService.addUserToGroup(groupId, user);
     this.AddUserToLocalGroup(user._id.toString(), groupId);
-    this.emitAddUserToGroup(client.broadcast.to(organization._id.toString()), {
+    this.emitAddUserToGroup(this.server.to(organization._id.toString()), {
       groupId,
       userId: user._id.toString(),
     });
@@ -267,7 +272,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     await this.lunchGroupService.removeUserFromGroup(groupId, user);
 
     this.RemoveUserFromLocaleGroup(user._id.toString(), groupId);
-    this.emitRemoveUserFromGroup(client.broadcast.to(organization._id.toString()), {
+    this.emitRemoveUserFromGroup(this.server.to(organization._id.toString()), {
       groupId,
       userId: user._id.toString(),
     });
@@ -287,8 +292,8 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       },
     },
   })
-  emitUserConnected(eventTarget: BroadcastOperator<EventsMap, any> | Socket, user: User) {
-    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, { user });
+  emitUserConnected(eventTarget: BroadcastOperator<EventsMap, any> | Socket, userId: string) {
+    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, { userId });
   }
 
   @AsyncApiSub({
@@ -315,7 +320,10 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       },
     },
   })
-  emitSetUserList(eventTarget: BroadcastOperator<EventsMap, any> | Socket, users: User[]) {
+  emitSetUserList(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    users: Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
+  ) {
     return eventTarget.emit(LunchGroupEmittedEvents.setUserList, { users });
   }
 
