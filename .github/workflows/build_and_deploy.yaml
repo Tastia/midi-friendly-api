@@ -57,9 +57,15 @@ jobs:
             AWS_ACCESS_KEY=$AWS_ACCESS_KEY
             AWS_KEY_SECRET=$AWS_KEY_SECRET
 
+            AWS_SES_SOURCE_EMAIL=TASTIA<pro.tastia@gmail.com>
+            AWS_SES_REGION=eu-central-1
+
             AWS_CLOUDWATCH_API_GROUP_NAME=midi-friendly-api
             AWS_CLOUDWATCH_WORKER_GROUP_NAME=midi-friendly-worker
             AWS_CLOUDWATCH_REGION=eu-central-1
+
+            CLIENT_APP_URL=https://app.midifriendly.com
+            ADMIN_APP_URL=https://admin.midifriendly.com
             " >> .env
       - name: Build image & deploy
         uses: appleboy/ssh-action@master

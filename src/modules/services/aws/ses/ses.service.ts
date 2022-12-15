@@ -12,9 +12,10 @@ export class SesService {
 
   async sendEmail(params: { to: string; subject: string; html: string; text: string }) {
     try {
+      Logger.debug(`Source email: ${this.configService.get<string>('aws.sesSourceEmail')}`);
       const sesResponse = await this.ses
         .sendEmail({
-          Source: this.configService.get<string>('aws.sesSourceEmail'),
+          Source: this.configService.get<string>('aws.sesSourceEmail') || 'pro.tastia@gmail.com',
           Destination: { ToAddresses: [params.to] },
           Message: {
             Subject: { Data: params.subject },
@@ -29,9 +30,10 @@ export class SesService {
         `sendMail requestId: ${sesResponse.$response.requestId} and messageId: ${sesResponse.MessageId}`,
         SesService.name,
       );
-      return true;
+      return { success: true };
     } catch (err) {
       Logger.error(err.message, SesService.name);
+      throw err;
     }
   }
 }

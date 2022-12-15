@@ -63,13 +63,15 @@ export class MailerConsumer {
   @OnQueueActive()
   onActive(job: Job) {
     Logger.debug(
-      `Processing job ${job.id} of type MailConsumer. Data: ${JSON.stringify(job.data)}`,
+      `Processing job ${job.id} of type MailConsumer. Data: ${JSON.stringify(job.data, null, 2)}`,
     );
   }
 
   @OnQueueCompleted()
   onComplete(job: Job, result: any) {
-    Logger.debug(`Completed job ${job.id} of type MailConsumer. Result: ${JSON.stringify(result)}`);
+    Logger.debug(
+      `Completed job ${job.id} of type MailConsumer. Result: ${JSON.stringify(result, null, 2)}`,
+    );
   }
 
   @OnQueueFailed()

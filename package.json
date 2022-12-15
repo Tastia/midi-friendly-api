@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "emails": "cp -r emails dist/",
+    "emails": "bash ./setup-emails.sh",
     "prebuild": "rimraf dist",
     "build": "nest build && npm run emails ",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -21,10 +21,11 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "worker:start": "nest start --watch --config nest-cli-worker.json",
-    "worker:prod": "node dist/worker/worker"
+    "worker:prod": "node dist/src/worker/worker"
   },
   "dependencies": {
     "@asyncapi/generator": "^1.9.13",
+    "@chronicstone/mongoose-search": "^1.0.1",
     "@googlemaps/google-maps-services-js": "^3.3.16",
     "@maizzle/framework": "next",
     "@nestjs/bull": "^0.6.2",
