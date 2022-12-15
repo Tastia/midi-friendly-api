@@ -37,7 +37,7 @@ export class User {
 const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.virtual('email').get(function (this: UserDocument) {
-  return this.credentials.email;
+  return this.credentials?.email ?? '';
 });
 
 UserSchema.pre<UserDocument>('save', function (next) {

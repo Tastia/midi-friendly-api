@@ -12,7 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MailerModule } from './modules/mailer/mailer.module';
 import { AwsSdkModule } from 'nest-aws-sdk';
 import { awsHandlerConfig } from '@modules/services/aws/aws.config';
-import { DevelopModule } from './modules/_develop/_develop.module';
+import { FiltersModule } from './modules/filters/filters.module';
 
 @Module({
   imports: [
@@ -34,7 +34,7 @@ import { DevelopModule } from './modules/_develop/_develop.module';
     ServicesModule,
     AuthModule,
     MailerModule,
-    DevelopModule,
+    FiltersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
