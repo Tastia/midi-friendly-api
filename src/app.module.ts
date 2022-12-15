@@ -13,6 +13,7 @@ import { MailerModule } from './modules/mailer/mailer.module';
 import { AwsSdkModule } from 'nest-aws-sdk';
 import { awsHandlerConfig } from '@modules/services/aws/aws.config';
 import { FiltersModule } from './modules/filters/filters.module';
+import { InvitationsModule } from './modules/invitations/invitations.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { FiltersModule } from './modules/filters/filters.module';
     AuthModule,
     MailerModule,
     FiltersModule,
+    InvitationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

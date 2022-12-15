@@ -6,7 +6,7 @@ import { InvitationUsage } from '@common/types/auth';
 
 export type InvitationDocument = Invitation & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Invitation {
   @Transform(({ value }) => value.toString())
   _id: mongoose.Types.ObjectId;
@@ -31,8 +31,17 @@ export class Invitation {
 
   @Prop([{ type: InvitationUsage }])
   usage: InvitationUsage[];
+
+  isExpired: boolean;
 }
 
 const InvitationSchema = SchemaFactory.createForClass(Invitation);
+
+InvitationSchema.virtual('isExpired').get(function () {
+  const today = new Date(new Date().setHours(0, 0, 0, 0));
+  const target = new Date(new Date(this.expireAt).setHours(0, 0, 0, 0));
+
+  return target.toISOString() < today.toISOString();
+});
 
 export { InvitationSchema };
