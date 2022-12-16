@@ -157,9 +157,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() createdGroup: CreateGroupDto,
   ) {
-    const group = await (
-      await this.lunchGroupService.create(createdGroup, user, organization)
-    ).populate('users owner');
+    const group = await this.lunchGroupService.create(createdGroup, user, organization);
     this.RegisterLocalGroup(group._id.toString(), user._id.toString());
     this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     client.join(group._id.toString());
