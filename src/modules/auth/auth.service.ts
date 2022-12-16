@@ -152,11 +152,19 @@ export class AuthService {
       (invitation.type === 'email' &&
         (!emailHash || !invitation.emails.some((email) => comparePassword(email, emailHash))))
     )
-      throw new NotFoundException();
+      return {
+        success: false,
+        notFound: true,
+      };
 
+    const unhashedEmail = !emailHash
+      ? null
+      : invitation.emails?.find?.((email) => comparePassword(email, emailHash)) ?? '';
     const maxUsageReached = (invitation.usage?.length ?? 0) >= invitation.maxUsage;
-    const alreadyUsed = invitation.usage.some((item) => comparePassword(item.email, emailHash));
     const expired = invitation.expireAt < new Date();
+    const alreadyUsed = !emailHash
+      ? false
+      : invitation.usage.some((item) => comparePassword(item.email, emailHash));
 
     if (maxUsageReached || alreadyUsed || expired)
       return {
