@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "emails": "bash ./setup-emails.sh",
+    "emails": "sh ./setup-emails.sh",
     "prebuild": "rimraf dist",
     "build": "nest build && npm run emails ",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
