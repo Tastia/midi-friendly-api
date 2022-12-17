@@ -37,7 +37,6 @@ import { LunchGroup } from '@schemas/lunchGroup.schema';
 import { SetLunchGroupListDto } from './sub-dto/set-lunch-group-list.dto';
 import { UserAccessGroupDto } from './sub-dto/user-access-group.dto';
 
-const GATEWAY_CHANNEL = 'LunchGroupGateway';
 const AUTH_HEADERS_DOC = {
   type: 'object',
   properties: {
@@ -58,7 +57,7 @@ const AUTH_HEADERS_DOC = {
   serviceName: 'LunchGroupGateway',
   description: 'Lunch group gateway - Manages all live interactions with the users map ',
 })
-@WebSocketGateway(8080, { cors: { origin: '*' } })
+@WebSocketGateway({ cors: { origin: '*' } })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
   @WebSocketServer() server: Server;
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();
@@ -157,9 +156,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() createdGroup: CreateGroupDto,
   ) {
-    const group = await (
-      await this.lunchGroupService.create(createdGroup, user, organization)
-    ).populate('users owner');
+    const group = await this.lunchGroupService.create(createdGroup, user, organization);
     this.RegisterLocalGroup(group._id.toString(), user._id.toString());
     this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
     client.join(group._id.toString());

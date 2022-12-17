@@ -15,15 +15,17 @@ COPY ./nest-cli.json ./api
 COPY ./pnpm-lock.yaml ./api
 COPY ./tsconfig.build.json ./api
 COPY ./tsconfig.json ./api
+COPY ./setup-emails.sh ./api
 
 # folder needed
 COPY ./src ./api/src
+COPY ./emails ./api/emails
 # COPY ./node_modules ./api/node_modules
 # COPY ./.docker/run.sh ./api/
 WORKDIR /api
 
 RUN npm install 
-
+RUN npm run emails
 RUN npm run build
 
 # RUN chmod u+r+x ./run.sh

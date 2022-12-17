@@ -100,7 +100,7 @@ export class AuthService {
         invitationConfig.targetApp === InvitationTargetApp.Admin
           ? 'app.appUrls.admin'
           : 'app.appUrls.client',
-      ) + `/invitation/${invitation._id}`
+      ) + `/auth/invitation/${invitation._id}`
     );
   }
 
@@ -119,7 +119,7 @@ export class AuthService {
         invitationConfig.targetApp === InvitationTargetApp.Admin
           ? 'app.appUrls.admin'
           : 'app.appUrls.client',
-      ) + `/invitation/${invitation._id}`;
+      ) + `/auth/invitation/${invitation._id}`;
 
     this.queueService.add({
       queueName: Queues.MailQueue,
@@ -152,11 +152,19 @@ export class AuthService {
       (invitation.type === 'email' &&
         (!emailHash || !invitation.emails.some((email) => comparePassword(email, emailHash))))
     )
-      throw new NotFoundException();
+      return {
+        success: false,
+        notFound: true,
+      };
 
+    const unhashedEmail = !emailHash
+      ? null
+      : invitation.emails?.find?.((email) => comparePassword(email, emailHash)) ?? '';
     const maxUsageReached = (invitation.usage?.length ?? 0) >= invitation.maxUsage;
-    const alreadyUsed = invitation.usage.some((item) => comparePassword(item.email, emailHash));
     const expired = invitation.expireAt < new Date();
+    const alreadyUsed = !emailHash
+      ? false
+      : invitation.usage.some((item) => comparePassword(item.email, emailHash));
 
     if (maxUsageReached || alreadyUsed || expired)
       return {
@@ -245,6 +253,8 @@ export class AuthService {
     return organizations.map((organization) => ({
       _id: organization._id,
       name: organization.name,
+      address: organization.address,
+      coordinates: organization.coordinates,
     }));
   }
 }
