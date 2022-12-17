@@ -95,7 +95,12 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       ],
     });
 
-    const connectedUsers = (await this.userService.find({ organizations: organization._id }))
+    const connectedUsers = (
+      await this.userService.find(
+        { organizations: organization._id },
+        '_id credentials.type credentials.email firstName lastName createdAt organizations',
+      )
+    )
       .map((user) => user.toObject())
       .map(({ organizations, ...user }) => ({
         ...user,

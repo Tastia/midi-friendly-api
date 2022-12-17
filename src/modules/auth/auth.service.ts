@@ -100,7 +100,7 @@ export class AuthService {
         invitationConfig.targetApp === InvitationTargetApp.Admin
           ? 'app.appUrls.admin'
           : 'app.appUrls.client',
-      ) + `/invitation/${invitation._id}`
+      ) + `/auth/invitation/${invitation._id}`
     );
   }
 
@@ -119,7 +119,7 @@ export class AuthService {
         invitationConfig.targetApp === InvitationTargetApp.Admin
           ? 'app.appUrls.admin'
           : 'app.appUrls.client',
-      ) + `/invitation/${invitation._id}`;
+      ) + `/auth/invitation/${invitation._id}`;
 
     this.queueService.add({
       queueName: Queues.MailQueue,
@@ -253,6 +253,8 @@ export class AuthService {
     return organizations.map((organization) => ({
       _id: organization._id,
       name: organization.name,
+      address: organization.address,
+      coordinates: organization.coordinates,
     }));
   }
 }
