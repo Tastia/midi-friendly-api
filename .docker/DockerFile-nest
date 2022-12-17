@@ -15,6 +15,7 @@ COPY ./nest-cli.json ./api
 COPY ./pnpm-lock.yaml ./api
 COPY ./tsconfig.build.json ./api
 COPY ./tsconfig.json ./api
+COPY ./setup-emails.sh ./api
 
 # folder needed
 COPY ./src ./api/src
