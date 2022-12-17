@@ -163,7 +163,7 @@ export class GoogleMapsService {
 
       const [restaurants] = await rateLimitPromiseQueue<BaseRestaurant>(
         locations.map((location) => () => this.mapRestaurantFullData(location)),
-        { concurrency: 1, interval: 1000, runsPerInterval: 2 },
+        { concurrency: 1, interval: 1500, runsPerInterval: 1 },
       );
 
       return restaurants;
