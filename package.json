@@ -8,7 +8,7 @@
   "scripts": {
     "emails": "sh ./setup-emails.sh",
     "prebuild": "rimraf dist",
-    "build": "nest build && npm run emails ",
+    "build": "nest build ",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "npm run emails && nest start --watch",
