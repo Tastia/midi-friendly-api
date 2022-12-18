@@ -57,7 +57,7 @@ const AUTH_HEADERS_DOC = {
   serviceName: 'LunchGroupGateway',
   description: 'Lunch group gateway - Manages all live interactions with the users map ',
 })
-@WebSocketGateway({ cors: { origin: '*' } })
+@WebSocketGateway(8080, { cors: { origin: '*' } })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
   @WebSocketServer() server: Server;
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();

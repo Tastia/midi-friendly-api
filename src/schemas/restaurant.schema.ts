@@ -37,6 +37,12 @@ export class Restaurant {
 
   @Prop({ type: RestaurantReviews })
   reviews: RestaurantReviews;
+
+  @Prop()
+  website?: string;
+
+  @Prop()
+  phoneNumber?: string;
 }
 
 export const RestaurantSchema = SchemaFactory.createForClass(Restaurant);

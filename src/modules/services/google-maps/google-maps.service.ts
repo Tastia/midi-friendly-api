@@ -3,7 +3,6 @@ import { Coordinates } from '@common/types/address';
 import { Address } from '@common/types/address';
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { Client, Place } from '@googlemaps/google-maps-services-js';
-import { ExceptionHandler } from 'winston';
 import { rateLimitPromiseQueue } from '@shared/utils/rate-limit-promise-queue';
 
 @Injectable()
@@ -106,17 +105,16 @@ export class GoogleMapsService {
   }
 
   async mapRestaurantFullData(location: Place): Promise<BaseRestaurant> {
+    Logger.debug(
+      `Retriving full restaurant data for placeId :  ${location.place_id}`,
+      'GoogleMapsService.mapRestaurantFullData',
+    );
     try {
       const restaurantDetails = await this.getRestaurantDetails(location.place_id);
       return {
         name: restaurantDetails.name,
         placeId: restaurantDetails.place_id,
-        address: {
-          street: restaurantDetails?.address_components?.[0]?.long_name ?? '',
-          city: restaurantDetails?.address_components?.[1]?.long_name ?? '',
-          zip: restaurantDetails?.address_components?.[6]?.long_name ?? '',
-          country: restaurantDetails?.address_components?.[5]?.long_name ?? '',
-        },
+        address: this.formatAddressFromString(restaurantDetails.adr_address),
         coordinates: {
           latitude: restaurantDetails.geometry.location.lat,
           longitude: restaurantDetails.geometry.location.lng,
@@ -150,6 +148,10 @@ export class GoogleMapsService {
   }
 
   async getRestaurantsNearby(coordinates: Coordinates): Promise<BaseRestaurant[]> {
+    Logger.debug(
+      `Retriving restaurants nearby for coordinates : ${JSON.stringify(coordinates)}`,
+      'GoogleMapsService.getRestaurantsNearby',
+    );
     try {
       const locations = await this.GMapsClient.placesNearby({
         params: {
@@ -188,5 +190,14 @@ export class GoogleMapsService {
       },
       responseType: 'stream',
     });
+  }
+
+  formatAddressFromString(rawAddress: string): Address {
+    return {
+      street: rawAddress.match(/(?<=<span class="street-address">)(.*?)(?=<\/span>)/g)[0],
+      city: rawAddress.match(/(?<=<span class="locality">)(.*?)(?=<\/span>)/g)[0],
+      zip: rawAddress.match(/(?<=<span class="postal-code">)(.*?)(?=<\/span>)/g)[0],
+      country: rawAddress.match(/(?<=<span class="country-name">)(.*?)(?=<\/span>)/g)[0],
+    };
   }
 }
