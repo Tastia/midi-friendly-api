@@ -28,7 +28,7 @@ RUN npm install
 RUN npm run build
 RUN npm run emails
 
-RUN npm run start:prod & run start:worker &
+# RUN npm run start:prod & run start:worker &
 
 # RUN chmod u+r+x ./run.sh
 
