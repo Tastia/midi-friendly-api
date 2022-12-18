@@ -24,6 +24,9 @@ COPY ./emails ./api/emails
 # COPY ./.docker/run.sh ./api/
 WORKDIR /api
 
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
 RUN npm install 
 RUN npm run build
 RUN npm run emails
