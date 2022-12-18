@@ -32,5 +32,5 @@ RUN npm run start:prod & run start:worker &
 
 # RUN chmod u+r+x ./run.sh
 
-# ENTRYPOINT ["tail", "-f", "/dev/null"]
+ENTRYPOINT ["tail", "-f", "/dev/null"]
 # ENTRYPOINT ["npm", "run", "start:prod", "&", "npm", "run", "worker:prod", "&"]
