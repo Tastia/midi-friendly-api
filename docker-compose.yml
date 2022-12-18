@@ -8,6 +8,7 @@ services:
     # tty: true
     ports:
       - 3000:${API_PORT}
+      - 8080:8080
     env_file: .env
   # nginx:
   #   container_name: nginx
