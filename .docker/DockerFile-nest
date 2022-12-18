@@ -28,9 +28,5 @@ RUN npm install
 RUN npm run build
 RUN npm run emails
 
-# RUN npm run start:prod & run start:worker &
-
-# RUN chmod u+r+x ./run.sh
-
-ENTRYPOINT ["tail", "-f", "/dev/null"]
-# ENTRYPOINT ["npm", "run", "start:prod", "&", "npm", "run", "worker:prod", "&"]
+# ENTRYPOINT ["tail", "-f", "/dev/null"]
+ENTRYPOINT ["npm", "run", "start:prod", "&", "npm", "run", "worker:prod", "&"]
