@@ -44,7 +44,7 @@ export class AuthService {
     if (
       account &&
       Object.values(AuthProviders).includes(payload.type as AuthProviders) &&
-      (await compare(payload.password, (account.credentials as ProviderCredentials).userId))
+      (await compare(payload.userId, (account.credentials as ProviderCredentials).userId))
     )
       return account;
 
@@ -240,8 +240,8 @@ export class AuthService {
   }
 
   protected getActiveAccountInfo(user: UserDocument): ActiveAccount {
-    const { _id, firstName, lastName, email } = user;
-    return { _id, firstName, lastName, email };
+    const { _id, firstName, lastName, email, avatar } = user;
+    return { _id, firstName, lastName, email, avatar };
   }
 
   protected async getAvailableOrganizations(user: UserDocument): Promise<AvailableOrganization[]> {

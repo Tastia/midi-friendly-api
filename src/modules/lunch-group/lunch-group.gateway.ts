@@ -96,8 +96,12 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
     const connectedUsers = (await this.userService.find({ organizations: organization._id }))
       .map((user) => user.toObject())
-      .map(({ organizations, ...user }) => ({
+      .map((user) => ({
         ...user,
+        credentials: {
+          email: user.credentials.email,
+          type: user.credentials.type,
+        },
         isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
       }));
 
@@ -156,12 +160,17 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() createdGroup: CreateGroupDto,
   ) {
-    const group = await this.lunchGroupService.create(createdGroup, user, organization);
-    this.RegisterLocalGroup(group._id.toString(), user._id.toString());
-    this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
-    client.join(group._id.toString());
+    try {
+      const group = await this.lunchGroupService.create(createdGroup, user, organization);
+      this.RegisterLocalGroup(group._id.toString(), user._id.toString());
+      this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
+      client.join(group._id.toString());
 
-    this.emitAddGroup(this.server.to(organization._id.toString()), group);
+      this.emitAddGroup(this.server.to(organization._id.toString()), group);
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 
   @WsAuth()
@@ -183,17 +192,22 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() { groupData, groupId }: UpdateGroupDto,
   ) {
-    const group = await this.lunchGroupService.findOne({
-      _id: groupId,
-      organization: organization._id,
-    });
+    try {
+      const group = await this.lunchGroupService.findOne({
+        _id: groupId,
+        organization: organization._id,
+      });
 
-    if (!group) throw new WsException('Group not found');
-    if (group.owner.toString() !== user._id.toString())
-      throw new WsException('Unauthorized operation');
+      if (!group) throw new WsException('Group not found');
+      if (group.owner.toString() !== user._id.toString())
+        throw new WsException('Unauthorized operation');
 
-    const udpatedGroup = await this.lunchGroupService.update(groupId, groupData);
-    this.emitUpdateGroup(this.server.to(organization._id.toString()), udpatedGroup);
+      const udpatedGroup = await this.lunchGroupService.update(groupId, groupData);
+      this.emitUpdateGroup(this.server.to(organization._id.toString()), udpatedGroup);
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 
   @WsAuth()
@@ -215,18 +229,23 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() { groupId }: DeleteGroupDto,
   ) {
-    const group = await this.lunchGroupService.findOne({
-      _id: groupId,
-      organization: organization._id,
-    });
+    try {
+      const group = await this.lunchGroupService.findOne({
+        _id: groupId,
+        organization: organization._id,
+      });
 
-    if (!group) throw new WsException('Group not found');
-    if (group.owner.toString() !== user._id.toString())
-      throw new WsException('Unauthorized operation');
+      if (!group) throw new WsException('Group not found');
+      if (group.owner.toString() !== user._id.toString())
+        throw new WsException('Unauthorized operation');
 
-    await this.lunchGroupService.delete(groupId);
-    this.DeleteLocalGroup(groupId);
-    this.emitRemoveGroup(this.server.to(organization._id.toString()), { groupId });
+      await this.lunchGroupService.delete(groupId);
+      this.DeleteLocalGroup(groupId);
+      this.emitRemoveGroup(this.server.to(organization._id.toString()), { groupId });
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 
   @WsAuth()
@@ -247,14 +266,18 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() { groupId }: AccessGroupDto,
   ) {
-    client.join(groupId);
-
-    await this.lunchGroupService.addUserToGroup(groupId, user);
-    this.AddUserToLocalGroup(user._id.toString(), groupId);
-    this.emitAddUserToGroup(this.server.to(organization._id.toString()), {
-      groupId,
-      userId: user._id.toString(),
-    });
+    try {
+      client.join(groupId);
+      await this.lunchGroupService.addUserToGroup(groupId, user);
+      this.AddUserToLocalGroup(user._id.toString(), groupId);
+      this.emitAddUserToGroup(this.server.to(organization._id.toString()), {
+        groupId,
+        userId: user._id.toString(),
+      });
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 
   @WsAuth()
@@ -275,14 +298,19 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @ActiveOrganization() organization: Organization,
     @MessageBody() { groupId }: { groupId: string },
   ) {
-    client.leave(groupId);
-    await this.lunchGroupService.removeUserFromGroup(groupId, user);
+    try {
+      client.leave(groupId);
+      await this.lunchGroupService.removeUserFromGroup(groupId, user);
 
-    this.RemoveUserFromLocaleGroup(user._id.toString(), groupId);
-    this.emitRemoveUserFromGroup(this.server.to(organization._id.toString()), {
-      groupId,
-      userId: user._id.toString(),
-    });
+      this.RemoveUserFromLocaleGroup(user._id.toString(), groupId);
+      this.emitRemoveUserFromGroup(this.server.to(organization._id.toString()), {
+        groupId,
+        userId: user._id.toString(),
+      });
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 
   // ###############################################################################

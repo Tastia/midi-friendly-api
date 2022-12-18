@@ -31,6 +31,11 @@ export class ActiveAccount {
     description: 'email',
   })
   email: string;
+
+  @ApiProperty({
+    description: 'avatar',
+  })
+  avatar: string;
 }
 
 export class AccessTokenResponse {
