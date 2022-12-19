@@ -1,3 +1,4 @@
+import { LunchGroup } from './../../schemas/lunchGroup.schema';
 import { QueueModule } from '@modules/services/queue/queue.module';
 import { Invitation, InvitationSchema } from '@schemas/invitation.schema';
 import { LocalStrategy } from './strategies/local.strategy';
@@ -31,6 +32,7 @@ import { Queues } from '@common/types/queue.type';
     UserModule,
     OrganizationModule,
     QueueModule,
+    LunchGroup,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],

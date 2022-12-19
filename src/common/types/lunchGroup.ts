@@ -4,6 +4,7 @@ export enum LunchGroupStatus {
 }
 
 export enum LunchGroupEmittedEvents {
+  addUserToOrganization = 'AddUserToOrganization',
   userConnected = 'UserConnected',
   userDisconnected = 'UserDisconnected',
   setUserList = 'SetUserList',

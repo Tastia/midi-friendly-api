@@ -19,6 +19,7 @@ import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -58,7 +59,7 @@ const AUTH_HEADERS_DOC = {
   description: 'Lunch group gateway - Manages all live interactions with the users map ',
 })
 @WebSocketGateway(8080, { cors: { origin: '*' } })
-export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection {
+export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection, OnGatewayInit {
   @WebSocketServer() server: Server;
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();
   public static lunchGroupUsers = new Map<string, string[]>();
@@ -69,6 +70,10 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     private readonly lunchGroupService: LunchGroupService,
     private readonly organizationService: OrganizationService,
   ) {}
+
+  afterInit(server: Server) {
+    this.lunchGroupService.socketServer = server;
+  }
 
   async handleConnection(@ConnectedSocket() client: Socket) {
     const { authorization, organizationid } = client.handshake.headers;
@@ -328,6 +333,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     },
   })
   emitUserConnected(eventTarget: BroadcastOperator<EventsMap, any> | Socket, userId: string) {
+    Logger.log(`Emitting user connected - ${userId}`);
     return eventTarget.emit(LunchGroupEmittedEvents.userConnected, { userId });
   }
 
@@ -342,6 +348,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     },
   })
   emitUserDisconnected(eventTarget: BroadcastOperator<EventsMap, any> | Socket, userId: string) {
+    Logger.log(`Emitting user disconnected - ${userId}`);
     return eventTarget.emit(LunchGroupEmittedEvents.userDisconnected, { userId });
   }
 
@@ -359,6 +366,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     eventTarget: BroadcastOperator<EventsMap, any> | Socket,
     users: Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
   ) {
+    Logger.log(`Emitting set user list - ${users.length}`);
     return eventTarget.emit(LunchGroupEmittedEvents.setUserList, { users });
   }
 
@@ -373,6 +381,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     },
   })
   emitSetGroupList(eventTarget: BroadcastOperator<EventsMap, any> | Socket, groups: LunchGroup[]) {
+    Logger.log(`Emitting set group list - ${groups.length}`);
     return eventTarget.emit(LunchGroupEmittedEvents.setGroupList, { groups });
   }
 
@@ -387,6 +396,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     },
   })
   emitAddGroup(eventTarget: BroadcastOperator<EventsMap, any> | Socket, group: LunchGroup) {
+    Logger.log(`Emitting add group - ${group._id}`);
     return eventTarget.emit(LunchGroupEmittedEvents.addGroup, { group });
   }
 
@@ -401,6 +411,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     },
   })
   emitUpdateGroup(eventTarget: BroadcastOperator<EventsMap, any> | Socket, group: LunchGroup) {
+    Logger.log(`Emitting update group - ${group._id}`);
     return eventTarget.emit(LunchGroupEmittedEvents.updateGroup, {
       groupData: group,
       groupId: group._id.toString(),
@@ -418,6 +429,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     },
   })
   emitRemoveGroup(eventTarget: BroadcastOperator<EventsMap, any> | Socket, data: DeleteGroupDto) {
+    Logger.log(`Emitting remove group - ${data.groupId}`);
     return eventTarget.emit(LunchGroupEmittedEvents.removeGroup, data);
   }
 
@@ -435,6 +447,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     eventTarget: BroadcastOperator<EventsMap, any> | Socket,
     { groupId, userId }: UserAccessGroupDto,
   ) {
+    Logger.log(`Emitting add user to group - ${groupId} - ${userId}`);
     return eventTarget.emit(LunchGroupEmittedEvents.addUserToGroup, { groupId, userId });
   }
 
@@ -452,6 +465,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     eventTarget: BroadcastOperator<EventsMap, any> | Socket,
     data: UserAccessGroupDto,
   ) {
+    Logger.log(`Emitting remove user from group - ${data.groupId} - ${data.userId}`);
     return eventTarget.emit(LunchGroupEmittedEvents.removeUserFromGroup, data);
   }
 

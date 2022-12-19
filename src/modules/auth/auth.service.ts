@@ -1,3 +1,4 @@
+import { LunchGroupService } from '@modules/lunch-group/lunch-group.service';
 import { InviteUsersByEmailDto } from './dto/invite-users-by-email.dto';
 import { AuthProviders, ProviderCredentials, RegisterAccountPayload } from '@common/types/auth';
 import { InvitationType, InvitationTargetApp, AuthPayload } from '@common/types/auth';
@@ -24,6 +25,7 @@ import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { QueueEmailsOperation, Queues } from '@common/types/queue.type';
 import { QueueService } from '@modules/services/queue/queue.service';
 import { ValidateInvitationDto } from './dto/validate-invitation.dto';
+import { UserDto } from '@modules/lunch-group/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +37,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly organizationService: OrganizationService,
     private readonly queueService: QueueService,
+    private readonly lunchGroupService: LunchGroupService,
   ) {}
 
   async validate(payload: AuthPayload, adminAuth: boolean): Promise<UserDocument> {
@@ -243,6 +246,16 @@ export class AuthService {
     invitation.markModified('usage');
 
     await Promise.all([user.save(), invitation.save()]);
+    if (invitation.organization) {
+      const userData = user.toObject();
+      this.lunchGroupService.addUserToOrganization(invitation.organization._id.toString(), {
+        ...userData,
+        credentials: {
+          email: userData.credentials.email,
+          type: userData.credentials.type,
+        },
+      } as unknown as UserDto);
+    }
     return { success: true };
   }
 
