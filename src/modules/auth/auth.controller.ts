@@ -19,6 +19,7 @@ import { CreateInvitationLinkDto } from './dto/create-invitation-link.dto';
 import { EmailLoginDto } from './dto/email-login.dto';
 import { RequestWithUser } from './dto/request-with-account.interface';
 import { ValidateInvitationDto } from './dto/validate-invitation.dto';
+import { JWTAuth } from '@common/decorators/jwt-auth.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -55,6 +56,7 @@ export class AuthController {
     return this.authService.login(user, true);
   }
 
+  @JWTAuth()
   @Post('invitation/create-invitation-link')
   @ApiOperation({ summary: 'Create shareable invitation link' })
   @ApiOkResponse({
@@ -68,6 +70,7 @@ export class AuthController {
     return this.authService.createInvitationLink(invitationPayload);
   }
 
+  @JWTAuth()
   @Post('invitation/send-email-invitation')
   @ApiOperation({ summary: 'Send email invitation to specific people' })
   @ApiOkResponse({

@@ -9,6 +9,7 @@ import { Socket } from 'socket.io';
 
 @Injectable()
 export class GatewayGuard implements CanActivate {
+  private logger = new Logger('GatewayGuard');
   constructor(
     private readonly authService: AuthService,
     private readonly organizationService: OrganizationService,
@@ -22,14 +23,14 @@ export class GatewayGuard implements CanActivate {
       const user = await this.authService.validateAccessToken(authToken.split(' ')[1]);
       const organization = await this.organizationService.findOne({ _id: organziationId });
 
-      Logger.debug(
+      this.logger.debug(
         `User ${user._id.toString()} reaching organization ${organization?._id?.toString()}`,
         'WsGuard',
       );
       context.switchToHttp().getRequest().user = user;
       context.switchToHttp().getRequest().organization = organization;
 
-      Logger.debug(
+      this.logger.debug(
         `Can activate : ${Boolean(user) && Boolean(organization) ? 'YES' : 'NO'}`,
         'WsGuard',
       );

@@ -1,5 +1,4 @@
-import { Invitation } from '@schemas/invitation.schema';
-import { RegisterAccountPayload, LinkAccountPayload } from './../../common/types/auth';
+import { RegisterAccountPayload } from '@common/types/auth';
 import { OrganizationService } from '@modules/organization/organization.service';
 import { PopulateQuery } from '@common/types/mongoose';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
@@ -41,6 +40,10 @@ export class UserService {
 
   findOne(filter?: FilterQuery<UserDocument>, populate?: PopulateQuery) {
     return this.userModel.findOne(filter ?? {}).populate(populate ?? ('' as any));
+  }
+
+  updateOne(filter: FilterQuery<UserDocument>, update: Partial<UserDocument>) {
+    return this.userModel.updateOne(filter, update);
   }
 
   findOneByEmailWithSecret(email: string, credentialType: 'email' | 'google' | 'facebook') {
