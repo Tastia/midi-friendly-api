@@ -9,7 +9,7 @@ export class RestaurantController {
 
   @Get()
   getAllRestaurants() {
-    return this.restaurantService.find();
+    return this.restaurantService.find({}, ['organization']);
   }
 
   @Get(':organizationId')

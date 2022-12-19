@@ -37,7 +37,22 @@ export class AuthController {
     @Req() { user }: RequestWithUser,
     @Body() {}: EmailLoginDto,
   ): Promise<AccessTokenResponse> {
-    return this.authService.login(user);
+    return this.authService.login(user, false);
+  }
+
+  @Post('admin/login')
+  @ApiOperation({ summary: 'Login' })
+  @ApiOkResponse({
+    description: 'Success',
+    type: AccessTokenResponse,
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @UseGuards(AuthGuard('local'))
+  async loginAdmin(
+    @Req() { user }: RequestWithUser,
+    @Body() {}: EmailLoginDto,
+  ): Promise<AccessTokenResponse> {
+    return this.authService.login(user, true);
   }
 
   @Post('invitation/create-invitation-link')

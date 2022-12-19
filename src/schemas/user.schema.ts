@@ -31,6 +31,9 @@ export class User {
   @Prop({ type: Object, required: true })
   credentials: EmailCredentials | ProviderCredentials;
 
+  @Prop({ type: Boolean, default: false })
+  admin: boolean;
+
   email: string;
 }
 

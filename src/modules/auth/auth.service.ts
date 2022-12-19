@@ -4,7 +4,13 @@ import { InvitationType, InvitationTargetApp, AuthPayload } from '@common/types/
 import { UserService } from '@modules/user/user.service';
 import { User, UserDocument } from '@schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AccessTokenResponse, ActiveAccount, AvailableOrganization } from './auth.type';
 import { OrganizationService } from '@modules/organization/organization.service';
@@ -31,8 +37,9 @@ export class AuthService {
     private readonly queueService: QueueService,
   ) {}
 
-  async validate(payload: AuthPayload): Promise<UserDocument> {
+  async validate(payload: AuthPayload, adminAuth: boolean): Promise<UserDocument> {
     const account = await this.userService.findOneByEmailWithSecret(payload.email, payload.type);
+    if (adminAuth && !account.admin) throw new UnauthorizedException('Accès non autorisé');
     if (
       account &&
       account.credentials.type === 'email' &&
@@ -51,7 +58,7 @@ export class AuthService {
     return null;
   }
 
-  async login(user: UserDocument): Promise<AccessTokenResponse> {
+  async login(user: UserDocument, admin: boolean): Promise<AccessTokenResponse> {
     if (!user) throw new NotFoundException();
 
     return {
@@ -217,7 +224,7 @@ export class AuthService {
 
     const user =
       account.mode === 'link'
-        ? await this.validate(account.linkPayload as AuthPayload)
+        ? await this.validate(account.linkPayload as AuthPayload, false)
         : await this.userService.registerUser(account.registerPayload as RegisterAccountPayload);
 
     if (!user) throw new NotFoundException('User not found');
@@ -240,8 +247,8 @@ export class AuthService {
   }
 
   protected getActiveAccountInfo(user: UserDocument): ActiveAccount {
-    const { _id, firstName, lastName, email, avatar } = user;
-    return { _id, firstName, lastName, email, avatar };
+    const { _id, firstName, lastName, email, avatar, admin } = user;
+    return { _id, firstName, lastName, email, avatar, admin };
   }
 
   protected async getAvailableOrganizations(user: UserDocument): Promise<AvailableOrganization[]> {

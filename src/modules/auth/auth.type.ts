@@ -36,6 +36,11 @@ export class ActiveAccount {
     description: 'avatar',
   })
   avatar: string;
+
+  @ApiProperty({
+    description: 'admin access',
+  })
+  admin?: boolean;
 }
 
 export class AccessTokenResponse {
