@@ -82,10 +82,12 @@ export class AuthService {
     });
   }
 
-  async validateAccessToken(token: string): Promise<User> {
+  async validateAccessToken(token: string, throwOnErr = true): Promise<User> {
     try {
       Logger.debug(`Validating access token ${token}`);
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload = throwOnErr
+        ? await this.jwtService.verifyAsync(token)
+        : this.jwtService.decode(token);
       return await this.userService.findOne({ _id: payload._id });
     } catch (error) {
       Logger.error(error);

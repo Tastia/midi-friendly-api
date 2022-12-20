@@ -10,6 +10,12 @@ services:
       - 3000:${API_PORT}
       - 8080:8080
     env_file: .env
+    restart: on-failure
+    restart_policy:
+      condition: on-failure
+      delay: 3s
+      max_attempts: 5
+      window: 60s
   # nginx:
   #   container_name: nginx
   #   build:
