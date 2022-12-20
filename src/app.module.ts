@@ -10,8 +10,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ServicesModule } from './modules/services/services.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { MailerModule } from './modules/mailer/mailer.module';
-import { AwsSdkModule } from 'nest-aws-sdk';
-import { awsHandlerConfig } from '@modules/services/aws/aws.config';
 import { FiltersModule } from './modules/filters/filters.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
 
@@ -29,7 +27,6 @@ import { InvitationsModule } from './modules/invitations/invitations.module';
       }),
       inject: [ConfigService],
     }),
-    AwsSdkModule.forRootAsync(awsHandlerConfig()),
     UserModule,
     LunchGroupModule,
     ServicesModule,

@@ -36,8 +36,8 @@ async function bootstrap() {
               new WinstonCloudWatch({
                 logGroupName: process.env.AWS_CLOUDWATCH_WORKER_GROUP_NAME,
                 logStreamName: `${process.env.AWS_CLOUDWATCH_WORKER_GROUP_NAME}-${process.env.NODE_ENV}`,
-                awsAccessKeyId: process.env.AWS_ACCESS_KEY,
-                awsSecretKey: process.env.AWS_KEY_SECRET,
+                awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                awsSecretKey: process.env.AWS_SECRET_ACCESS_KEY,
                 awsRegion: process.env.AWS_CLOUDWATCH_REGION,
                 messageFormatter: function (item) {
                   return item.level + ': ' + item.message + ' ' + JSON.stringify(item.meta);

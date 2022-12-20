@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@asyncapi/generator": "^1.9.13",
+    "@aws-sdk/client-ses": "^3.234.0",
     "@chronicstone/mongoose-search": "^1.0.1",
     "@googlemaps/google-maps-services-js": "^3.3.16",
     "@maizzle/framework": "next",
@@ -44,6 +45,7 @@
     "@nestjs/websockets": "^9.2.0",
     "@socket.io/redis-adapter": "^7.2.0",
     "aws-sdk": "^2.1258.0",
+    "aws-sdk-v3-nest": "^0.1.5",
     "bcrypt": "^5.1.0",
     "bull": "^4.10.1",
     "class-transformer": "^0.5.1",
@@ -54,7 +56,6 @@
     "jsonwebtoken": "^8.5.1",
     "markdown-it-attrs": "^4.1.6",
     "mongoose": "^6.7.2",
-    "nest-aws-sdk": "^3.0.0",
     "nest-winston": "^1.8.0",
     "nestjs-asyncapi": "^0.3.6",
     "p-queue": "^7.3.0",
