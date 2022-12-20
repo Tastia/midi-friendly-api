@@ -12,7 +12,6 @@ COPY .env ./api
 COPY ./package.json ./api
 COPY ./nest-cli-worker.json ./api
 COPY ./nest-cli.json ./api
-COPY ./pnpm-lock.yaml ./api
 COPY ./tsconfig.build.json ./api
 COPY ./tsconfig.json ./api
 COPY ./setup-emails.sh ./api
