@@ -31,4 +31,5 @@ RUN npm run build
 RUN npm run emails
 
 # ENTRYPOINT ["tail", "-f", "/dev/null"]
-ENTRYPOINT ["npm", "run", "start:prod", "&", "npm", "run", "worker:prod", "&"]
+# ENTRYPOINT ["npm", "run", "start:prod", "&", "npm", "run", "worker:prod", "&"]
+CMD ./run.sh
