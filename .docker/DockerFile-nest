@@ -15,6 +15,7 @@ COPY ./nest-cli.json ./api
 COPY ./tsconfig.build.json ./api
 COPY ./tsconfig.json ./api
 COPY ./setup-emails.sh ./api
+COPY ./run.sh ./api
 
 # folder needed
 COPY ./src ./api/src
