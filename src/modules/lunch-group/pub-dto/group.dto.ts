@@ -1,7 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class GroupDto {
+  @ApiProperty()
+  @IsString()
+  label: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description?: string;
+
   @ApiProperty()
   @IsOptional()
   @IsNumber()

@@ -13,6 +13,12 @@ export class LunchGroup {
   @Transform(({ value }) => value.toString())
   _id: mongoose.Types.ObjectId;
 
+  @Prop()
+  label: string;
+
+  @Prop()
+  description?: string;
+
   @Prop({ default: LunchGroupStatus.open })
   status: 'open' | 'closed';
 

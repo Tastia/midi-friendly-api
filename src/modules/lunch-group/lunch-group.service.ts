@@ -26,6 +26,8 @@ export class LunchGroupService {
 
   create(grouppDto: CreateGroupDto, user: User, organization: Organization) {
     return this.lunchGroupModel.create({
+      label: grouppDto.label,
+      description: grouppDto.description,
       restaurant: grouppDto.restaurant,
       meetingTime: grouppDto.meetingTime,
       organization: organization._id,
