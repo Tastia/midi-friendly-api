@@ -41,7 +41,7 @@ jobs:
             API_URL=http://localhost
 
             REDIS_PORT=6379
-            REDIS_HOST=0.0.0.0
+            REDIS_HOST=localhost
 
             JWT_SECRET=1839DJJQZSZ091203
             JWT_REFRESH_SECRET=94012DJQKZDQ20123

@@ -1,35 +1,24 @@
+version: '3.4'
+name: midi-friendly-backend
 services:
-  redis:
-    image: redis:6.0.12-alpine
-    command: redis-server
-    ports:
-      - "6379:6379"
-    hostname: redis
   api:
     container_name: api-nest
     build:
       context: .
       dockerfile: ./.docker/DockerFile-nest
-    # command: bash -c "npm run start:prod"
-    # tty: true
     ports:
       - 3000:${API_PORT}
       - 8080:8080
     env_file: .env
     restart: always
-  # nginx:
-  #   container_name: nginx
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/DockerFile-nginx
-  #   tty: true
-  #   depends_on:
-  #     - api
-  #   environment:
-  #     - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
-  #     - NEST_HOST=${NEST_HOST}
-  #     - NEST_PORT=${NEST_PORT}
-  #     - NGINX_MAX_BODY=${NGINX_MAX_BODY}
+    volumes:
+      - ./redis-volume:/data
+    # depends_on:
+    #   - db
+  
+  # db:
+  #   image: redis:6.0.12-alpine
+  #   command: redis-server --protected-mode no
   #   ports:
-  #     - 80:80
-
+  #     - "6379:6379"
+  #   hostname: db

@@ -52,9 +52,8 @@ async function bootstrap() {
   // Starts listening for shutdown hooks
   app.enableShutdownHooks();
 
-  const port = app.get(ConfigService).get('bull.port');
-  const host = app.get(ConfigService).get('bull.host');
-  console.log(`${host} Port: ${port}`);
+  const url = app.get(ConfigService).get('bull.url');
+  console.log(`Redis service: ${url}`);
   await app.init();
 }
 

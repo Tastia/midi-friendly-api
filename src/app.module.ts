@@ -1,7 +1,7 @@
 import awsConfig from '@config/aws.config';
 import { LunchGroupModule } from '@modules/lunch-group/lunch-group.module';
 import appConfig from '@config/app.config';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MailerModule } from './modules/mailer/mailer.module';
 import { FiltersModule } from './modules/filters/filters.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
+import { HttpLoggerMiddleware } from '@common/middlewares/http-logger.middleware';
 
 @Module({
   imports: [
@@ -38,4 +39,8 @@ import { InvitationsModule } from './modules/invitations/invitations.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(HttpLoggerMiddleware).forRoutes('*');
+  }
+}

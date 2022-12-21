@@ -10,8 +10,8 @@ export class BullConfigService implements SharedBullConfigurationFactory {
   createSharedConfiguration(): Promise<Bull.QueueOptions> | Bull.QueueOptions {
     return {
       redis: {
+        port: this.configService.get<number>('bull.port'),
         host: this.configService.get<string>('bull.host'),
-        port: +this.configService.get<number>('bull.port'),
       },
     };
   }
