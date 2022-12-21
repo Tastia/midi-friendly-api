@@ -1,4 +1,10 @@
 services:
+  redis:
+    image: redis:6.0.12-alpine
+    command: redis-server
+    ports:
+      - "6379:6379"
+    hostname: redis
   api:
     container_name: api-nest
     build:

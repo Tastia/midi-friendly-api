@@ -77,8 +77,8 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
   async handleConnection(@ConnectedSocket() client: Socket) {
     const { authorization, organizationid } = client.handshake.headers;
-    const user = await this.authService.validateAccessToken(authorization.split(' ')[1]);
-    const organization = await this.organizationService.findOne({ _id: organizationid });
+    const user = await this.authService.validateAccessToken(authorization.split(' ')[1], false);
+    const organization = await this.organizationService.findOne({ _id: organizationid ?? 'N/A' });
     if (!user || !organization) {
       client.disconnect();
       throw new WsException('Unauthorized');
