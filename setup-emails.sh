@@ -2,10 +2,13 @@ if [ ! -d dist/emails ]; then
   mkdir -p dist/emails/
 fi
 
-if [ ! -d emails/node_modules ]; then
-  cd emails
-  npm install
-  cd ..
+cp -r emails/* dist/emails/
+cd dist/emails/
+
+# IF NODE_MODULES EXIST, DELETE IT
+if [ -d node_modules ]; then
+  rm -rf node_modules
 fi
 
-cp -r emails/* dist/emails/
+npm install
+cd ../..
