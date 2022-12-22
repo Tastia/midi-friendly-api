@@ -6,12 +6,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '@schemas/user.schema';
 import { FilterQuery, Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
+import {
+  PaginatedQuery,
+  MongooseSearchService,
+  SearchPaginateModel,
+} from '@chronicstone/mongoose-search';
+import {} from 'nestjs-asyncapi';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly organizationService: OrganizationService,
+    private readonly searchService: MongooseSearchService,
+    @InjectModel(User.name) private readonly usersPaginatedModel: SearchPaginateModel<UserDocument>,
   ) {}
 
   async create(newUser: CreateUserDto) {
@@ -44,6 +52,10 @@ export class UserService {
 
   updateOne(filter: FilterQuery<UserDocument>, update: Partial<UserDocument>) {
     return this.userModel.updateOne(filter, update);
+  }
+
+  deleteOne(filter: FilterQuery<UserDocument>) {
+    return this.userModel.deleteOne(filter);
   }
 
   findOneByEmailWithSecret(email: string, credentialType: 'email' | 'google' | 'facebook') {
@@ -79,5 +91,20 @@ export class UserService {
 
   private escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  list(query: PaginatedQuery, countOnly: boolean) {
+    const lookup = [
+      {
+        $lookup: {
+          from: 'organizations',
+          localField: 'organizations',
+          foreignField: '_id',
+          as: 'organizations',
+        },
+      },
+    ];
+
+    return this.searchService.search(this.usersPaginatedModel, query, lookup, countOnly);
   }
 }
