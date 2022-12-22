@@ -36,7 +36,7 @@ import { SatisfactionSurveysModule } from './modules/satisfaction-surveys/satisf
     MailerModule,
     FiltersModule,
     InvitationsModule,
-    SatisfactionSurveysModule,
+    // SatisfactionSurveysModule,
   ],
   controllers: [AppController],
   providers: [AppService],
