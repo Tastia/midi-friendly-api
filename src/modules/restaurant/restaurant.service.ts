@@ -4,11 +4,19 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Restaurant, RestaurantDocument } from '@schemas/restaurant.schema';
 import { FilterQuery, Model, Types } from 'mongoose';
 import { PopulateQuery } from '@common/types/mongoose';
+import {
+  MongooseSearchService,
+  PaginatedQuery,
+  SearchPaginateModel,
+} from '@chronicstone/mongoose-search';
 
 @Injectable()
 export class RestaurantService {
   constructor(
     @InjectModel(Restaurant.name) private readonly restaurantModel: Model<RestaurantDocument>,
+    @InjectModel(Restaurant.name)
+    private readonly restaurantPaginatedModel: SearchPaginateModel<RestaurantDocument>,
+    private readonly searchService: MongooseSearchService,
   ) {}
 
   createOrganizationRestaurants(organizationId: string, restaurants: BaseRestaurant[]) {
@@ -37,5 +45,26 @@ export class RestaurantService {
 
   findOne(filter?: FilterQuery<RestaurantDocument>, populate?: PopulateQuery) {
     return this.restaurantModel.findOne(filter ?? {}).populate(populate ?? ('' as any));
+  }
+
+  list(query: PaginatedQuery, count: boolean) {
+    const lookup = [
+      {
+        $lookup: {
+          from: 'organizations',
+          localField: 'organization',
+          foreignField: '_id',
+          as: 'organization',
+        },
+      },
+      {
+        $set: {
+          organization: {
+            $arrayElemAt: ['$organization', 0],
+          },
+        },
+      },
+    ];
+    return this.searchService.search(this.restaurantPaginatedModel, query, lookup, count);
   }
 }
