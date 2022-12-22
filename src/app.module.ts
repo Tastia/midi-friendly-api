@@ -13,7 +13,7 @@ import { MailerModule } from './modules/mailer/mailer.module';
 import { FiltersModule } from './modules/filters/filters.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
 import { HttpLoggerMiddleware } from '@common/middlewares/http-logger.middleware';
-import { SatisfactionSurveysModule } from './modules/satisfaction-surveys/satisfaction-surveys.module';
+// import { SatisfactionSurveysModule } from './modules/satisfaction-surveys/satisfaction-surveys.module';
 
 @Module({
   imports: [
