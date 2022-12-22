@@ -1,3 +1,4 @@
+import { MongooseSearchModule } from '@chronicstone/mongoose-search';
 import { AuthModule } from './../auth/auth.module';
 import { OrganizationModule } from '@modules/organization/organization.module';
 import { RestaurantModule } from '@modules/restaurant/restaurant.module';
@@ -21,6 +22,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     RestaurantModule,
     OrganizationModule,
     AuthModule,
+    MongooseSearchModule.register(),
   ],
   providers: [LunchGroupService, LunchGroupGateway],
   controllers: [LunchGroupController],
