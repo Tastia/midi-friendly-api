@@ -1,3 +1,5 @@
+import { UserDocument } from '@schemas/user.schema';
+import { ActiveUser } from './../../common/decorators/user.decorator';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { InviteUsersByEmailDto } from './dto/invite-users-by-email.dto';
 import {
@@ -50,7 +52,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard('local'))
   async loginAdmin(
-    @Req() { user }: RequestWithUser,
+    @ActiveUser() user: UserDocument,
     @Body() {}: EmailLoginDto,
   ): Promise<AccessTokenResponse> {
     return this.authService.login(user, true);

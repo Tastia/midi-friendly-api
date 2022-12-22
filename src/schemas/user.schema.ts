@@ -5,6 +5,9 @@ import mongoose, { Document } from 'mongoose';
 import { Transform } from 'class-transformer';
 import { hashPassword } from '@shared/utils/hash-password';
 import { ApiProperty } from '@nestjs/swagger';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const aggregatePaginate = require('mongoose-aggregate-paginate-v2');
+
 export type UserDocument = User & Document;
 
 @Schema({ timestamps: true, toJSON: { virtuals: true } })
@@ -27,6 +30,9 @@ export class User {
 
   @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'Organization' }])
   organizations: Organization[];
+
+  @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'Organization' }])
+  adminOrganizations: Organization[];
 
   @Prop({ type: Object, required: true })
   credentials: EmailCredentials | ProviderCredentials;
@@ -56,5 +62,7 @@ UserSchema.pre<UserDocument>('save', function (next) {
 
   next();
 });
+
+UserSchema.plugin(aggregatePaginate);
 
 export { UserSchema };

@@ -64,10 +64,13 @@ export class AuthService {
   async login(user: UserDocument, admin: boolean): Promise<AccessTokenResponse> {
     if (!user) throw new NotFoundException();
 
+    if (admin && !user.admin && !user.adminOrganizations.length)
+      throw new UnauthorizedException('Accès non autorisé');
+
     return {
-      account: this.getActiveAccountInfo(user),
-      accessToken: await this.generateAccessToken(user),
-      organizations: await this.getAvailableOrganizations(user),
+      account: this.getActiveAccountInfo(user, admin),
+      accessToken: await this.generateAccessToken(user, admin),
+      organizations: await this.getAvailableOrganizations(user, admin),
     };
   }
 
@@ -75,7 +78,7 @@ export class AuthService {
    * Generate access token for a given account
    * @param account
    */
-  async generateAccessToken(account: UserDocument): Promise<string> {
+  async generateAccessToken(account: UserDocument, admin: boolean): Promise<string> {
     const expiresIn = this.configService.get<string>('app.accessTokenExpiration');
     return this.jwtService.sign(account.toObject(), {
       expiresIn,
@@ -261,16 +264,18 @@ export class AuthService {
     return { success: true };
   }
 
-  protected getActiveAccountInfo(user: UserDocument): ActiveAccount {
+  protected getActiveAccountInfo(user: UserDocument, adminApp: boolean): ActiveAccount {
     const { _id, firstName, lastName, email, avatar, admin } = user;
     return { _id, firstName, lastName, email, avatar, admin };
   }
 
-  protected async getAvailableOrganizations(user: UserDocument): Promise<AvailableOrganization[]> {
+  protected async getAvailableOrganizations(
+    user: UserDocument,
+    admin: boolean,
+  ): Promise<AvailableOrganization[]> {
     Logger.debug(`Getting available organizations for user ${user._id}`);
-    Logger.debug(JSON.stringify(user, null, 2));
     const organizations = await this.organizationService.find({
-      _id: { $in: user.organizations },
+      _id: { $in: admin ? user.adminOrganizations : user.organizations },
     });
     return organizations.map((organization) => ({
       _id: organization._id,
