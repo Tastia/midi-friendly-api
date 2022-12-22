@@ -6,6 +6,8 @@ import { Address } from '@common/types/address';
 import { LunchGroup } from './lunchGroup.schema';
 import { Restaurant } from './restaurant.schema';
 import { ApiProperty } from '@nestjs/swagger';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const aggregatePaginate = require('mongoose-aggregate-paginate-v2');
 
 export type OrganizationDocument = Organization & Document;
 
@@ -45,5 +47,7 @@ OrganizationSchema.virtual('restaurants', {
   localField: '_id',
   foreignField: 'organization',
 });
+
+OrganizationSchema.plugin(aggregatePaginate);
 
 export { OrganizationSchema };

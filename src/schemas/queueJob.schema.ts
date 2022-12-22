@@ -3,6 +3,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
 import { Transform } from 'class-transformer';
 export type QueueJobDocument = QueueJob & Document;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const aggregatePaginate = require('mongoose-aggregate-paginate-v2');
 
 @Schema({ timestamps: true })
 export class QueueJob {
@@ -29,5 +31,7 @@ export class QueueJob {
 }
 
 const QueueJobSchema = SchemaFactory.createForClass(QueueJob);
+
+QueueJobSchema.plugin(aggregatePaginate);
 
 export { QueueJobSchema };

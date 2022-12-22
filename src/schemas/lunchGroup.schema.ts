@@ -5,6 +5,8 @@ import mongoose, { Document } from 'mongoose';
 import { Transform } from 'class-transformer';
 import { User } from './user.schema';
 import { LunchGroupStatus } from '@common/types/lunchGroup';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const aggregatePaginate = require('mongoose-aggregate-paginate-v2');
 
 export type LunchGroupDocument = LunchGroup & Document;
 
@@ -41,4 +43,8 @@ export class LunchGroup {
   users: User[];
 }
 
-export const LunchGroupSchema = SchemaFactory.createForClass(LunchGroup);
+const LunchGroupSchema = SchemaFactory.createForClass(LunchGroup);
+
+LunchGroupSchema.plugin(aggregatePaginate);
+
+export { LunchGroupSchema };

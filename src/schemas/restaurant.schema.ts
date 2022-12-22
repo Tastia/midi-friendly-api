@@ -6,6 +6,8 @@ import { Transform } from 'class-transformer';
 import { Address } from '@common/types/address';
 import { Organization } from './oraganization.schema';
 import { RestaurantPhotos } from '@common/types/restaurant';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const aggregatePaginate = require('mongoose-aggregate-paginate-v2');
 
 export type RestaurantDocument = Restaurant & Document;
 
@@ -45,4 +47,8 @@ export class Restaurant {
   phoneNumber?: string;
 }
 
-export const RestaurantSchema = SchemaFactory.createForClass(Restaurant);
+const RestaurantSchema = SchemaFactory.createForClass(Restaurant);
+
+RestaurantSchema.plugin(aggregatePaginate);
+
+export { RestaurantSchema };

@@ -3,6 +3,8 @@ import { Transform } from 'class-transformer';
 import { Organization } from './oraganization.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { InvitationUsage } from '@common/types/auth';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const aggregatePaginate = require('mongoose-aggregate-paginate-v2');
 
 export type InvitationDocument = Invitation & Document;
 
@@ -43,5 +45,7 @@ InvitationSchema.virtual('isExpired').get(function () {
 
   return target.toISOString() < today.toISOString();
 });
+
+InvitationSchema.plugin(aggregatePaginate);
 
 export { InvitationSchema };
