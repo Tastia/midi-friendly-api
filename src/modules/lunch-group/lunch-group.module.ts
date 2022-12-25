@@ -1,3 +1,4 @@
+import { ChatModule } from '@modules/chat/chat.module';
 import { MongooseSearchModule } from '@chronicstone/mongoose-search';
 import { AuthModule } from './../auth/auth.module';
 import { OrganizationModule } from '@modules/organization/organization.module';
@@ -23,6 +24,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     OrganizationModule,
     AuthModule,
     MongooseSearchModule.register(),
+    // ChatModule,
   ],
   providers: [LunchGroupService, LunchGroupGateway],
   controllers: [LunchGroupController],

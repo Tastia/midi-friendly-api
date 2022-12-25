@@ -1,3 +1,6 @@
+import { ChatInterfaceService } from './../chat/chat-interface.service';
+import { ChatGateway } from './../chat/chat.gateway';
+import { ChatService } from './../chat/chat.service';
 import { AddGroupDto } from './sub-dto/add-group.dto';
 import { UserDisconnectedDto } from './sub-dto/user-disconnected.dt';
 import { UserConnectedDto } from './sub-dto/user-connected.dto';
@@ -58,7 +61,7 @@ const AUTH_HEADERS_DOC = {
   serviceName: 'LunchGroupGateway',
   description: 'Lunch group gateway - Manages all live interactions with the users map ',
 })
-@WebSocketGateway(8080, { cors: { origin: '*' } })
+@WebSocketGateway(8080, { namespace: 'map', cors: { origin: '*' } })
 export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnection, OnGatewayInit {
   @WebSocketServer() server: Server;
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();
@@ -69,6 +72,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     private readonly userService: UserService,
     private readonly lunchGroupService: LunchGroupService,
     private readonly organizationService: OrganizationService,
+    private readonly chatService: ChatInterfaceService,
   ) {}
 
   afterInit(server: Server) {
@@ -171,6 +175,8 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
       client.join(group._id.toString());
 
+      ChatGateway.userSockets.get(user._id.toString())?.join(group.chatRoom.toString());
+
       this.emitAddGroup(this.server.to(organization._id.toString()), group);
       return { success: true };
     } catch (err) {
@@ -242,7 +248,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
       if (!group) throw new WsException('Group not found');
       if (group.owner.toString() !== user._id.toString())
-        throw new WsException('Unauthorized operation');
+        return { success: false, message: 'Opération non autorisée' };
+
+      ChatGateway.userSockets.get(user._id.toString())?.leave(group.chatRoom.toString());
 
       await this.lunchGroupService.delete(groupId);
       this.DeleteLocalGroup(groupId);
@@ -273,12 +281,15 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
   ) {
     try {
       client.join(groupId);
-      await this.lunchGroupService.addUserToGroup(groupId, user);
+      const group = await this.lunchGroupService.addUserToGroup(groupId, user);
       this.AddUserToLocalGroup(user._id.toString(), groupId);
       this.emitAddUserToGroup(this.server.to(organization._id.toString()), {
         groupId,
         userId: user._id.toString(),
       });
+
+      await this.chatService.addUserToRoom(user, group.chatRoom.toString());
+
       return { success: true };
     } catch (err) {
       return { success: false, message: err.message };
@@ -304,8 +315,16 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @MessageBody() { groupId }: { groupId: string },
   ) {
     try {
+      const group = await this.lunchGroupService.findOne({
+        _id: groupId,
+        organization: organization._id,
+      });
+
+      if (!group) return { success: false, message: 'Groupe non trouvé' };
+
       client.leave(groupId);
       await this.lunchGroupService.removeUserFromGroup(groupId, user);
+      await this.chatService.removeUserFromRoom(user, group.chatRoom.toString());
 
       this.RemoveUserFromLocaleGroup(user._id.toString(), groupId);
       this.emitRemoveUserFromGroup(this.server.to(organization._id.toString()), {

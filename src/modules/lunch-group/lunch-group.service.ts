@@ -1,4 +1,5 @@
-import { LunchGroupEmittedEvents } from './../../common/types/lunchGroup';
+import { ChatService } from '@modules/chat/chat.service';
+import { LunchGroupEmittedEvents } from '@common/types/lunchGroup';
 import { UpdatedGroupData } from './pub-dto/update-group.dto';
 import { CreateGroupDto } from './pub-dto/create-group.dto';
 import { Injectable, Logger } from '@nestjs/common';
@@ -24,6 +25,7 @@ export class LunchGroupService {
     @InjectModel(LunchGroup.name)
     private lunchGroupPaginatedModel: SearchPaginateModel<LunchGroupDocument>,
     private readonly searchService: MongooseSearchService,
+    private readonly chatService: ChatService,
   ) {}
 
   find(filter?: FilterQuery<LunchGroupDocument>, populate?: PopulateQuery) {
@@ -34,7 +36,8 @@ export class LunchGroupService {
     return this.lunchGroupModel.findOne(filter ?? {}).populate(populate ?? ('' as any));
   }
 
-  create(grouppDto: CreateGroupDto, user: User, organization: Organization) {
+  async create(grouppDto: CreateGroupDto, user: User, organization: Organization) {
+    const chatRoom = await this.chatService.createRoom(user);
     return this.lunchGroupModel.create({
       label: grouppDto.label,
       description: grouppDto.description,
@@ -44,6 +47,7 @@ export class LunchGroupService {
       owner: user._id,
       userSlots: grouppDto.userSlots,
       users: [user._id],
+      chatRoom: chatRoom._id,
     });
   }
 
