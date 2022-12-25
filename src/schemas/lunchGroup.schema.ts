@@ -1,3 +1,4 @@
+import { ChatRoom } from './chatRoom.schema';
 import { Organization } from './oraganization.schema';
 import { Restaurant } from './restaurant.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
@@ -41,6 +42,9 @@ export class LunchGroup {
 
   @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }])
   users: User[];
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' })
+  chatRoom: ChatRoom;
 }
 
 const LunchGroupSchema = SchemaFactory.createForClass(LunchGroup);

@@ -14,6 +14,7 @@ import { FiltersModule } from './modules/filters/filters.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
 import { HttpLoggerMiddleware } from '@common/middlewares/http-logger.middleware';
 // import { SatisfactionSurveysModule } from './modules/satisfaction-surveys/satisfaction-surveys.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { HttpLoggerMiddleware } from '@common/middlewares/http-logger.middleware
     MailerModule,
     FiltersModule,
     InvitationsModule,
+    ChatModule,
     // SatisfactionSurveysModule,
   ],
   controllers: [AppController],
