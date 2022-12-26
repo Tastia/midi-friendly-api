@@ -1,3 +1,7 @@
+import { RestaurantService } from '@modules/restaurant/restaurant.service';
+import { VoteGroupPollDto } from './pub-dto/vote-group-poll.dto';
+import { LunchGroupPoll } from './../../schemas/lunchGroupPoll.schema';
+import { CreateGroupPollDto } from './pub-dto/create-poll.dto';
 import { LunchGroupPollService } from './lunch-group-poll.service';
 import { ChatInterfaceService } from '@modules/chat/chat-interface.service';
 import { ChatGateway } from '@modules/chat/chat.gateway';
@@ -10,7 +14,7 @@ import { AuthService } from '@modules/auth/auth.service';
 import { UpdateGroupDto } from './pub-dto/update-group.dto';
 import { UpdateGroupDto as SUpdateGroupDto } from './sub-dto/update-group.dto';
 import { CreateGroupDto } from './pub-dto/create-group.dto';
-import { LunchGroupEmittedEvents } from '@common/types/lunchGroup';
+import { LunchGroupEmittedEvents, LunchGroupStatus } from '@common/types/lunchGroup';
 import { LunchGroupService } from './lunch-group.service';
 import { UserService } from '@modules/user/user.service';
 import { Organization } from '@schemas/oraganization.schema';
@@ -73,6 +77,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     private readonly lunchGroupPollService: LunchGroupPollService,
     private readonly organizationService: OrganizationService,
     private readonly chatService: ChatInterfaceService,
+    private readonly restaurantService: RestaurantService,
   ) {}
 
   afterInit(server: Server) {
@@ -114,6 +119,11 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
         isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
       }));
 
+    const groupPolls = await this.lunchGroupPollService.find({
+      organization: organization._id,
+      status: LunchGroupStatus.open,
+    });
+
     for (const group of lunchGroups.filter(
       (group) =>
         group.users.some((userId) => userId.toString() === user._id.toString()) ||
@@ -128,6 +138,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       client,
       connectedUsers as Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
     );
+    this.emitSetGroupPollList(client, groupPolls);
     this.emitSetGroupList(client, lunchGroups);
   }
 
@@ -337,9 +348,121 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     }
   }
 
+  @WsAuth()
+  @SubscribeMessage(LunchGroupReceivedEvents.createGroupPoll)
+  @UsePipes(new WSValidationPipe({ transform: true }))
+  @AsyncApiPub({
+    channel: LunchGroupReceivedEvents.createGroupPoll,
+    summary: 'Create lunch group poll',
+    description: 'Create a poll for a lunch group',
+    message: {
+      payload: { type: CreateGroupPollDto },
+      headers: AUTH_HEADERS_DOC as any,
+    },
+  })
+  async createGroupPoll(
+    @ActiveUser() user: User,
+    @ActiveOrganization() organization: Organization,
+    @MessageBody() pollData: CreateGroupPollDto,
+  ) {
+    try {
+      const poll = await this.lunchGroupPollService.createPoll(pollData, organization, user);
+      this.emitCreateGroupPoll(this.server.to(organization._id.toString()), poll);
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  }
+
+  @WsAuth()
+  @SubscribeMessage(LunchGroupReceivedEvents.voteGroupPoll)
+  @UsePipes(new WSValidationPipe({ transform: true }))
+  @AsyncApiPub({
+    channel: LunchGroupReceivedEvents.voteGroupPoll,
+    summary: 'Vote for lunch group poll',
+    description: 'Create a poll for a lunch group',
+    message: {
+      payload: { type: VoteGroupPollDto },
+      headers: AUTH_HEADERS_DOC as any,
+    },
+  })
+  async voteGroupPoll(
+    @ActiveUser() user: User,
+    @ActiveOrganization() organization: Organization,
+    @MessageBody() pollData: VoteGroupPollDto,
+  ) {
+    try {
+      const poll = await this.lunchGroupPollService.findOne({
+        _id: pollData.pollId,
+        organization: organization._id,
+      });
+      const restaurant = await this.restaurantService.findOne({
+        _id: pollData.restaurantId,
+        organization: organization._id,
+      });
+
+      if (!poll) return { success: false, message: 'Sondage de groupe inexistant' };
+      if (!restaurant) return { success: false, message: 'Restaurant inexistant' };
+      if (poll.votes.some((vote) => vote.user.toString() === user._id.toString()))
+        return { success: false, message: 'Vous avez déjà voté pour ce sondage' };
+      if (
+        poll.allowedRestaurants.length > 0 &&
+        !poll.allowedRestaurants.some(
+          (restaurant) => restaurant.toString() === pollData.restaurantId,
+        )
+      )
+        return { success: false, message: "Ce restaurant n'est pas autorisé" };
+
+      poll.votes.push({ user, restaurant });
+      await poll.save();
+      this.emitVoteGroupPoll(this.server.to(organization._id.toString()), {
+        pollId: poll._id,
+        vote: { user: user._id.toString(), restaurant: restaurant._id.toString() },
+      });
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  }
+
   // ###############################################################################
   // ############################ EVENT EMITTERS ###################################
   // ###############################################################################
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.addGroupPoll,
+    summary: 'Add group poll',
+    description: 'Notify clients that a new group poll has been created',
+    message: {
+      payload: {
+        type: LunchGroupPoll,
+      },
+    },
+  })
+  emitCreateGroupPoll(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    groupPoll: LunchGroupPoll,
+  ) {
+    Logger.log(`Emitting create group poll - ${groupPoll._id}`);
+    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, { groupPoll });
+  }
+
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.addGroupPollEntry,
+    summary: 'Add group poll vote entry',
+    description: 'Notify clients that a new group poll vote entry has been created',
+    message: {
+      payload: {
+        type: LunchGroupPoll,
+      },
+    },
+  })
+  emitVoteGroupPoll(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    voteData: { pollId: string; vote: { user: string; restaurant: string } },
+  ) {
+    Logger.log(`Emitting vote group poll`);
+    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, voteData);
+  }
 
   @AsyncApiSub({
     channel: LunchGroupEmittedEvents.userConnected,
@@ -401,6 +524,24 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
   })
   emitSetGroupList(eventTarget: BroadcastOperator<EventsMap, any> | Socket, groups: LunchGroup[]) {
     Logger.log(`Emitting set group list - ${groups.length}`);
+    return eventTarget.emit(LunchGroupEmittedEvents.setGroupList, { groups });
+  }
+
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.setGroupPollList,
+    summary: 'Set group poll list',
+    description: 'Set initial list of group polls of the organization when a user connects',
+    message: {
+      payload: {
+        type: SetLunchGroupListDto,
+      },
+    },
+  })
+  emitSetGroupPollList(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    groups: LunchGroupPoll[],
+  ) {
+    Logger.log(`Emitting set group poll list - ${groups.length}`);
     return eventTarget.emit(LunchGroupEmittedEvents.setGroupList, { groups });
   }
 
