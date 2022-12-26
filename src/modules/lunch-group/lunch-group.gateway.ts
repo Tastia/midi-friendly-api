@@ -1,13 +1,12 @@
-import { ChatInterfaceService } from './../chat/chat-interface.service';
-import { ChatGateway } from './../chat/chat.gateway';
-import { ChatService } from './../chat/chat.service';
+import { LunchGroupPollService } from './lunch-group-poll.service';
+import { ChatInterfaceService } from '@modules/chat/chat-interface.service';
+import { ChatGateway } from '@modules/chat/chat.gateway';
 import { AddGroupDto } from './sub-dto/add-group.dto';
 import { UserDisconnectedDto } from './sub-dto/user-disconnected.dt';
 import { UserConnectedDto } from './sub-dto/user-connected.dto';
 import { SetUserListDto } from './sub-dto/set-user-list.dto';
-/* eslint-disable @typescript-eslint/no-empty-function */
-import { OrganizationService } from './../organization/organization.service';
-import { AuthService } from './../auth/auth.service';
+import { OrganizationService } from '@modules/organization/organization.service';
+import { AuthService } from '@modules/auth/auth.service';
 import { UpdateGroupDto } from './pub-dto/update-group.dto';
 import { UpdateGroupDto as SUpdateGroupDto } from './sub-dto/update-group.dto';
 import { CreateGroupDto } from './pub-dto/create-group.dto';
@@ -71,6 +70,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly lunchGroupService: LunchGroupService,
+    private readonly lunchGroupPollService: LunchGroupPollService,
     private readonly organizationService: OrganizationService,
     private readonly chatService: ChatInterfaceService,
   ) {}

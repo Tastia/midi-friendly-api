@@ -2,10 +2,10 @@ import { ChatService } from '@modules/chat/chat.service';
 import { LunchGroupEmittedEvents } from '@common/types/lunchGroup';
 import { UpdatedGroupData } from './pub-dto/update-group.dto';
 import { CreateGroupDto } from './pub-dto/create-group.dto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { LunchGroup, LunchGroupDocument } from '@schemas/lunchGroup.schema';
-import { User, UserDocument } from '@schemas/user.schema';
+import { User } from '@schemas/user.schema';
 import { FilterQuery, Model } from 'mongoose';
 import { Organization } from '@schemas/oraganization.schema';
 import { PopulateQuery } from '@common/types/mongoose';
@@ -79,11 +79,6 @@ export class LunchGroupService {
   }
 
   addUserToOrganization(organizationId: string, user: UserDto) {
-    Logger.debug(
-      `Emitting ${LunchGroupEmittedEvents.addUserToOrganization} to ${organizationId} - ${user.email}`,
-    );
-
-    Logger.debug(`Socket server: ${this.socketServer}`);
     return this.socketServer
       .to(organizationId)
       .emit(LunchGroupEmittedEvents.addUserToOrganization, { user });

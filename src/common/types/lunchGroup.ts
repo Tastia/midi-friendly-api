@@ -1,6 +1,12 @@
+import { Restaurant } from '@schemas/restaurant.schema';
+import { User } from '@schemas/user.schema';
+import { Prop } from '@nestjs/mongoose';
+import mongoose from 'mongoose';
+
 export enum LunchGroupStatus {
-  open = 'open',
-  closed = 'closed',
+  open = 'Open',
+  closed = 'Closed',
+  cancelled = 'Deleted',
 }
 
 export enum LunchGroupEmittedEvents {
@@ -22,4 +28,12 @@ export enum LunchGroupReceivedEvents {
   joinGroup = 'JoinGroup',
   leaveGroup = 'LeaveGroup',
   updateGroup = 'UpdateGroup',
+}
+
+export class LunchGroupPollEntries {
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' })
+  restaurant: Restaurant;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  user: User;
 }
