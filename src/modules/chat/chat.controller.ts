@@ -6,6 +6,13 @@ import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  @Get(':roomId')
+  getRoom(@Param('roomId') roomId: string) {
+    return this.chatService.findOneRoom({ _id: roomId }, [
+      { path: 'users', select: '_id firstName lastName avatar' },
+    ]);
+  }
+
   @Get(':roomId/messages')
   getPaginatedMessages(
     @Query(new ValidationPipe({ transform: true })) params: PaginateQuery,
