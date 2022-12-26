@@ -1,3 +1,4 @@
+import { ChatRoom } from '@schemas/chatRoom.schema';
 import { ChatService } from '@modules/chat/chat.service';
 import { LunchGroupEmittedEvents } from '@common/types/lunchGroup';
 import { UpdatedGroupData } from './pub-dto/update-group.dto';
@@ -36,8 +37,14 @@ export class LunchGroupService {
     return this.lunchGroupModel.findOne(filter ?? {}).populate(populate ?? ('' as any));
   }
 
-  async create(grouppDto: CreateGroupDto, user: User, organization: Organization) {
-    const chatRoom = await this.chatService.createRoom(user);
+  async create(
+    grouppDto: CreateGroupDto,
+    user: User,
+    organization: Organization,
+    users?: User[],
+    chatroom?: ChatRoom,
+  ) {
+    const chatRoom = chatroom || (await this.chatService.createRoom(user));
     return this.lunchGroupModel.create({
       label: grouppDto.label,
       description: grouppDto.description,
@@ -46,7 +53,7 @@ export class LunchGroupService {
       organization: organization._id,
       owner: user._id,
       userSlots: grouppDto.userSlots,
-      users: [user._id],
+      users: [user._id, ...(users ? users.map((user) => user._id) : [])],
       chatRoom: chatRoom._id,
     });
   }

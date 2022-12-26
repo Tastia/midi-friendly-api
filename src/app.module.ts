@@ -15,6 +15,7 @@ import { InvitationsModule } from './modules/invitations/invitations.module';
 import { HttpLoggerMiddleware } from '@common/middlewares/http-logger.middleware';
 // import { SatisfactionSurveysModule } from './modules/satisfaction-surveys/satisfaction-surveys.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ChatModule } from './modules/chat/chat.module';
     FiltersModule,
     InvitationsModule,
     ChatModule,
+    ScheduleModule.forRoot(),
     // SatisfactionSurveysModule,
   ],
   controllers: [AppController],

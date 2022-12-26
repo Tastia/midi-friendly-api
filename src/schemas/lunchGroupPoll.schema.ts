@@ -6,6 +6,7 @@ import { Transform } from 'class-transformer';
 import { User } from './user.schema';
 import { LunchGroupPollEntries, LunchGroupStatus } from '@common/types/lunchGroup';
 import { LunchGroup } from './lunchGroup.schema';
+import { ChatRoom } from './chatRoom.schema';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const aggregatePaginate = require('mongoose-aggregate-paginate-v2');
 
@@ -45,6 +46,9 @@ export class LunchGroupPoll {
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'LunchGroup' })
   lunchGroup?: LunchGroup;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' })
+  chatRoom: ChatRoom;
 }
 
 const LunchGroupPollSchema = SchemaFactory.createForClass(LunchGroupPoll);

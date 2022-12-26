@@ -35,7 +35,7 @@ import type { BroadcastOperator, Server, Socket } from 'socket.io';
 import { ActiveOrganization } from '@common/decorators/organization.decorator';
 import { DeleteGroupDto } from './pub-dto/delete-group.dto';
 import { WsAuth } from '@common/decorators/ws-auth.decorator';
-import { Logger, UsePipes } from '@nestjs/common';
+import { Inject, Logger, UsePipes, forwardRef } from '@nestjs/common';
 import { AsyncApiPub, AsyncApiService, AsyncApiSub } from 'nestjs-asyncapi';
 import { AccessGroupDto } from './pub-dto/access-group-dto';
 import { WSValidationPipe } from '@common/pipes/socket-validation.pipe';
@@ -74,6 +74,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly lunchGroupService: LunchGroupService,
+    @Inject(forwardRef(() => LunchGroupPollService))
     private readonly lunchGroupPollService: LunchGroupPollService,
     private readonly organizationService: OrganizationService,
     private readonly chatService: ChatInterfaceService,
@@ -82,6 +83,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
 
   afterInit(server: Server) {
     this.lunchGroupService.socketServer = server;
+    this.lunchGroupPollService.socketServer = server;
   }
 
   async handleConnection(@ConnectedSocket() client: Socket) {
@@ -443,7 +445,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     groupPoll: LunchGroupPoll,
   ) {
     Logger.log(`Emitting create group poll - ${groupPoll._id}`);
-    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, { groupPoll });
+    return eventTarget.emit(LunchGroupEmittedEvents.addGroupPoll, { groupPoll });
   }
 
   @AsyncApiSub({
@@ -461,7 +463,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     voteData: { pollId: string; vote: { user: string; restaurant: string } },
   ) {
     Logger.log(`Emitting vote group poll`);
-    return eventTarget.emit(LunchGroupEmittedEvents.userConnected, voteData);
+    return eventTarget.emit(LunchGroupEmittedEvents.addGroupPollEntry, voteData);
   }
 
   @AsyncApiSub({
@@ -542,7 +544,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     groups: LunchGroupPoll[],
   ) {
     Logger.log(`Emitting set group poll list - ${groups.length}`);
-    return eventTarget.emit(LunchGroupEmittedEvents.setGroupList, { groups });
+    return eventTarget.emit(LunchGroupEmittedEvents.setGroupPollList, { groups });
   }
 
   @AsyncApiSub({

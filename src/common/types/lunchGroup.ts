@@ -25,6 +25,7 @@ export enum LunchGroupEmittedEvents {
   removeGroupPoll = 'RemoveGroupPoll',
   updateGroupPoll = 'UpdateGroupPoll',
   addGroupPollEntry = 'AddGroupPollEntry',
+  closeGroupPoll = 'CloseGroupPoll',
 }
 
 export enum LunchGroupReceivedEvents {
