@@ -40,7 +40,7 @@ export class LunchGroupPoll {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
   owner: User;
 
-  @Prop({ type: [LunchGroupPollEntries], default: [] })
+  @Prop([{ type: LunchGroupPollEntries }])
   votes: LunchGroupPollEntries[];
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'LunchGroup' })
