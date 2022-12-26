@@ -1,16 +1,18 @@
+import { AuthModule } from '@modules/auth/auth.module';
 import { OrganizationModule } from '@modules/organization/organization.module';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '@schemas/user.schema';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { MongooseSearchModule, MongooseSearchService } from '@chronicstone/mongoose-search';
+import { MongooseSearchModule } from '@chronicstone/mongoose-search';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     OrganizationModule,
     MongooseSearchModule.register(),
+    forwardRef(() => AuthModule),
   ],
   providers: [UserService],
   exports: [UserService],
