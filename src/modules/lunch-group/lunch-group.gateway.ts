@@ -71,11 +71,11 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
   public static lunchGroupUsers = new Map<string, string[]>();
 
   constructor(
-    private readonly authService: AuthService,
-    private readonly userService: UserService,
-    private readonly lunchGroupService: LunchGroupService,
     @Inject(forwardRef(() => LunchGroupPollService))
     private readonly lunchGroupPollService: LunchGroupPollService,
+    private readonly lunchGroupService: LunchGroupService,
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
     private readonly organizationService: OrganizationService,
     private readonly chatService: ChatInterfaceService,
     private readonly restaurantService: RestaurantService,

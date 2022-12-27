@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 export enum LunchGroupStatus {
   open = 'Open',
   closed = 'Closed',
-  cancelled = 'Deleted',
+  cancelled = 'Cancelled',
 }
 
 export enum LunchGroupEmittedEvents {

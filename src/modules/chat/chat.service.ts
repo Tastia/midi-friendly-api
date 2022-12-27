@@ -1,8 +1,9 @@
+import { ChatGateway } from './chat.gateway';
 import { ChatMessage, ChatMessageDocument } from '@schemas/chatMessage.schema';
 import { PostMessageDto } from './dto/sub/post-message.dto';
 import { User } from '@schemas/user.schema';
 import { ChatRoom, ChatRoomDocument } from '@schemas/chatRoom.schema';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Server } from 'socket.io';
 import { FilterQuery, Model } from 'mongoose';
@@ -16,6 +17,7 @@ export class ChatService {
   constructor(
     @InjectModel(ChatRoom.name) private readonly chatRoomModel: Model<ChatRoomDocument>,
     @InjectModel(ChatMessage.name) private readonly chatMessageModel: Model<ChatMessageDocument>,
+    @Inject(forwardRef(() => ChatGateway)) private readonly chatGateway: ChatGateway,
   ) {}
 
   getPaginatedMessages(roomId: string, options: { offset: number; limit: number }) {

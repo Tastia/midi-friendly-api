@@ -35,13 +35,12 @@ export class LunchGroupPollService {
     return this.lunchGroupPollModel.create({
       label: pollData.label,
       description: pollData.description,
-      restaurant: pollData.restaurant,
       meetingTime: pollData.meetingTime,
       userSlots: pollData.userSlots,
       organization: organization._id,
       owner: user._id,
       voteDeadline: pollData.voteDeadline,
-      votes: [],
+      votes: [{ user: user._id, restaurant: pollData.userVote }],
       ...(pollData.allowedRestaurants && { allowedRestaurants: pollData.allowedRestaurants }),
     });
   }
@@ -49,13 +48,10 @@ export class LunchGroupPollService {
   // RUN CRON EVERY MINUTE
   @Cron('1 * * * * *')
   async closeCompletedPolls() {
-    const polls = await this.find({ voteDeadline: { $lte: new Date() } }).populate([
-      'owner',
-      'users',
-      'organization',
-      'votes.user',
-      'chatRoom',
-    ]);
+    const polls = await this.find({
+      voteDeadline: { $lte: new Date() },
+      status: LunchGroupStatus.open,
+    }).populate(['owner', 'organization', 'votes.user', 'chatRoom']);
 
     await this.lunchGroupPollModel.updateMany(
       { _id: { $in: polls.map((poll) => poll._id) } },
