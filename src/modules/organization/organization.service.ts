@@ -13,7 +13,6 @@ import { Queue } from 'bull';
 @Injectable()
 export class OrganizationService {
   constructor(
-    @InjectQueue(Queues.MapsQueue) private mapsQueue: Queue<QueueMapsPayload>,
     @InjectModel(Organization.name) private readonly organizationModel: Model<OrganizationDocument>,
     private readonly googleMapsService: GoogleMapsService,
     private readonly queueService: QueueService,

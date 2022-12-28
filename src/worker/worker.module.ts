@@ -12,6 +12,7 @@ import { ProcessorModule } from './processor/processor.module';
 import { WorkerService } from './worker.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RestaurantModule } from '@modules/restaurant/restaurant.module';
+import { OrganizationModule } from '@modules/organization/organization.module';
 
 @Module({
   imports: [
@@ -36,7 +37,6 @@ import { RestaurantModule } from '@modules/restaurant/restaurant.module';
     MongooseModule.forFeature([], 'mongo'),
     ProcessorModule,
     QueueModule,
-    RestaurantModule,
   ],
   providers: [WorkerService],
 })

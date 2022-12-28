@@ -1,6 +1,9 @@
+import { Organization, OrganizationDocument } from '@schemas/oraganization.schema';
 import { AuthService } from '@modules/auth/auth.service';
 import { OrganizationService } from '@modules/organization/organization.service';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 /**
  * Access guard for Nest authentication mechanism
@@ -8,7 +11,8 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 @Injectable()
 export class AccessGuard implements CanActivate {
   constructor(
-    private readonly organizationService: OrganizationService,
+    @InjectModel(Organization.name)
+    private readonly organizationModel: Model<OrganizationDocument>,
     private readonly authService: AuthService,
   ) {}
 
@@ -20,7 +24,7 @@ export class AccessGuard implements CanActivate {
     const organizationId = context.switchToHttp().getRequest().headers.organizationid;
     const authToken = context.switchToHttp().getRequest().headers.authorization;
     const user = await this.authService.validateAccessToken(authToken.split(' ')[1]);
-    const organization = await this.organizationService.findOne({ _id: organizationId });
+    const organization = await this.organizationModel.findOne({ _id: organizationId });
 
     context.switchToHttp().getRequest().user = user;
     context.switchToHttp().getRequest().organization = organization;

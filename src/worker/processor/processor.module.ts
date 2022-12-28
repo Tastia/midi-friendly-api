@@ -1,4 +1,4 @@
-import { MailerModule } from './../../modules/mailer/mailer.module';
+import { MailerModule } from '@modules/mailer/mailer.module';
 import { QueueModule } from '@modules/services/queue/queue.module';
 import { RestaurantModule } from '@modules/restaurant/restaurant.module';
 import { OrganizationModule } from '@modules/organization/organization.module';

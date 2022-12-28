@@ -1,11 +1,10 @@
-import { LunchGroup } from './../../schemas/lunchGroup.schema';
+import { Organization, OrganizationSchema } from '@schemas/oraganization.schema';
+import { LunchGroupModule } from '@modules/lunch-group/lunch-group.module';
 import { QueueModule } from '@modules/services/queue/queue.module';
 import { Invitation, InvitationSchema } from '@schemas/invitation.schema';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { OrganizationModule } from '@modules/organization/organization.module';
-import { UserModule } from '@modules/user/user.module';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
@@ -27,12 +26,9 @@ import { Queues } from '@common/types/queue.type';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Invitation.name, schema: InvitationSchema },
+      { name: Organization.name, schema: OrganizationSchema },
     ]),
-    BullModule.registerQueue({ name: Queues.MailQueue }),
-    UserModule,
-    OrganizationModule,
     QueueModule,
-    LunchGroup,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],

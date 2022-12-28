@@ -1,17 +1,21 @@
 import { AuthService } from './../../modules/auth/auth.service';
 import { OrganizationService } from './../../modules/organization/organization.service';
-import { Organization } from './../../schemas/oraganization.schema';
-import { UserService } from '@modules/user/user.service';
-import { Injectable, CanActivate, ExecutionContext, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  Logger,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
-import { User } from '@schemas/user.schema';
 import { Socket } from 'socket.io';
 
 @Injectable()
 export class GatewayGuard implements CanActivate {
   private logger = new Logger('GatewayGuard');
   constructor(
-    private readonly authService: AuthService,
+    @Inject(forwardRef(() => AuthService)) private readonly authService: AuthService,
     private readonly organizationService: OrganizationService,
   ) {}
 

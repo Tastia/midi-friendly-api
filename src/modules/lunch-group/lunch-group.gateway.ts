@@ -74,11 +74,12 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     @Inject(forwardRef(() => LunchGroupPollService))
     private readonly lunchGroupPollService: LunchGroupPollService,
     private readonly lunchGroupService: LunchGroupService,
-    private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly organizationService: OrganizationService,
-    private readonly chatService: ChatInterfaceService,
     private readonly restaurantService: RestaurantService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+    private readonly chatService: ChatInterfaceService,
   ) {}
 
   afterInit(server: Server) {

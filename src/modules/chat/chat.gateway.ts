@@ -26,7 +26,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();
 
   constructor(
-    private readonly authService: AuthService,
+    @Inject(forwardRef(() => AuthService)) private readonly authService: AuthService,
     @Inject(forwardRef(() => ChatService)) private readonly chatService: ChatService,
   ) {}
 
