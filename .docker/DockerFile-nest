@@ -35,7 +35,7 @@ ARG PUPPETEER_SKIP_DOWNLOAD=1
 ENV PUPPETEER_SKIP_DOWNLOAD=${PUPPETEER_SKIP_DOWNLOAD}
 
 RUN npm install 
-RUN sh -c 'npm run build & pid=$!; sleep 20 && kill -15 $pid'
+RUN sh -c 'npm run build & pid=$!; sleep 60 && kill -15 $pid'
 RUN npm run emails
 
 RUN ["chmod", "+x", "run.sh"]
