@@ -27,7 +27,7 @@ export class LunchGroupPoll {
   description?: string;
 
   @Prop()
-  voteDeadline: string;
+  voteDeadline: Date;
 
   @Prop()
   meetingTime: string;
