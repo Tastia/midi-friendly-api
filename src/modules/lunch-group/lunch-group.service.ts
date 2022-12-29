@@ -53,7 +53,7 @@ export class LunchGroupService {
       organization: organization._id,
       owner: user._id,
       userSlots: grouppDto.userSlots,
-      users: [user._id, ...(users ? users.map((user) => user._id) : [])],
+      users: [...new Set([user._id, ...(users ? users.map((user) => user._id) : [])])],
       chatRoom: chatRoom._id,
     });
   }
