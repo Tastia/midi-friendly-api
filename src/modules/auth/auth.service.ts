@@ -90,7 +90,15 @@ export class AuthService {
 
   protected getActiveAccountInfo(user: UserDocument, adminApp: boolean): ActiveAccount {
     const { _id, firstName, lastName, email, avatar, admin } = user;
-    return { _id, firstName, lastName, email, avatar, admin };
+    return {
+      _id,
+      firstName,
+      lastName,
+      email,
+      avatar,
+      admin,
+      onboarded: adminApp ? user.onboarding?.adminApp ?? false : user.onboarding?.mapsApp ?? false,
+    };
   }
 
   protected async getAvailableOrganizations(

@@ -41,6 +41,11 @@ export class ActiveAccount {
     description: 'admin access',
   })
   admin?: boolean;
+
+  @ApiProperty({
+    description: 'onboarded',
+  })
+  onboarded?: boolean;
 }
 
 export class AccessTokenResponse {
