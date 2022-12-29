@@ -1,3 +1,4 @@
+import { CurrentApp, RequesterApp } from './../../common/decorators/app.decorator';
 import {
   Body,
   Controller,
@@ -110,5 +111,16 @@ export class UserController {
     @Body(new ValidationPipe({ transform: true })) invitationPayload: AcceptInvitationDto,
   ) {
     return this.userService.acceptInvitation(invitationPayload);
+  }
+
+  @JWTAuth()
+  @Post('complete-onboarding')
+  @ApiOperation({ summary: 'Complete onboarding' })
+  @ApiOkResponse({
+    description: 'Success',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  completeOnboarding(@ActiveUser() user: User, @CurrentApp() app: RequesterApp) {
+    return this.userService.completeOnboarding(user, app);
   }
 }

@@ -1,3 +1,4 @@
+import { UserOnboardingState } from './../common/types/auth';
 import { EmailCredentials, ProviderCredentials } from '@common/types/auth';
 import { Organization } from './oraganization.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
@@ -15,6 +16,9 @@ export class User {
   @ApiProperty({ type: String })
   @Transform(({ value }) => value.toString())
   _id: mongoose.Types.ObjectId;
+
+  @Prop({ default: { mapsApp: false, adminApp: false } })
+  onboarding?: UserOnboardingState;
 
   @ApiProperty()
   @Prop()

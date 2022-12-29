@@ -1,4 +1,3 @@
-import { WsException } from '@nestjs/websockets';
 import { User } from '@schemas/user.schema';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 

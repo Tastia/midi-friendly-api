@@ -1,3 +1,4 @@
+import { RequesterApp } from './../../common/decorators/app.decorator';
 import { AuthService } from '@modules/auth/auth.service';
 import { Invitation, InvitationDocument } from '@schemas/invitation.schema';
 import { Organization, OrganizationDocument } from '@schemas/oraganization.schema';
@@ -260,5 +261,22 @@ export class UserService {
       } as unknown as UserDto);
     }
     return { success: true };
+  }
+
+  async completeOnboarding(user: User, app: RequesterApp) {
+    return this.userModel.updateOne(
+      {
+        _id: user._id,
+      },
+      {
+        $set: {
+          onboarding: {
+            ...user.onboarding,
+            ...(app === 'admin' && { adminApp: true }),
+            ...(app === 'client' && { mapsApp: true }),
+          },
+        },
+      },
+    );
   }
 }

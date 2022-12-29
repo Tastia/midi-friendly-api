@@ -101,3 +101,11 @@ export class RegisterAccountPayload extends LinkAccountPayload {
   @IsString()
   avatar?: string;
 }
+
+export class UserOnboardingState {
+  @Prop()
+  mapsApp?: boolean;
+
+  @Prop()
+  adminApp?: boolean;
+}
