@@ -1,9 +1,10 @@
+import { LunchGroupGateway } from './lunch-group.gateway';
 import { ChatRoom } from '@schemas/chatRoom.schema';
 import { ChatService } from '@modules/chat/chat.service';
 import { LunchGroupEmittedEvents } from '@common/types/lunchGroup';
 import { UpdatedGroupData } from './pub-dto/update-group.dto';
 import { CreateGroupDto } from './pub-dto/create-group.dto';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { LunchGroup, LunchGroupDocument } from '@schemas/lunchGroup.schema';
 import { User } from '@schemas/user.schema';

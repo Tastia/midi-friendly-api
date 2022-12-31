@@ -3,7 +3,7 @@ import { LunchGroupService } from '@modules/lunch-group/lunch-group.service';
 import { User } from '@schemas/user.schema';
 import { Organization } from '@schemas/oraganization.schema';
 import { CreateGroupPollDto } from './pub-dto/create-poll.dto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { LunchGroupPoll, LunchGroupPollDocument } from '@schemas/lunchGroupPoll.schema';
 import { FilterQuery, Model } from 'mongoose';
@@ -21,6 +21,8 @@ export class LunchGroupPollService {
     @InjectModel(LunchGroupPoll.name)
     private readonly lunchGroupPollModel: Model<LunchGroupPollDocument>,
     private readonly LunchGroupService: LunchGroupService,
+    @Inject(forwardRef(() => LunchGroupGateway))
+    private readonly lunchGroupGateway: LunchGroupGateway,
   ) {}
 
   find(filter?: FilterQuery<LunchGroupPollDocument>, populate?: PopulateQuery) {
@@ -58,6 +60,13 @@ export class LunchGroupPollService {
       { $set: { status: LunchGroupStatus.closed } },
     );
 
+    // Emit close poll event to all users in the organization
+    for (const poll of polls)
+      this.lunchGroupGateway.emitCloseGroupPoll(
+        this.socketServer.to(poll.organization.toString()),
+        { pollId: poll._id.toString() },
+      );
+
     Logger.log(`Closing ${polls.length} polls`);
     for (const poll of polls) {
       const mostVotedRestaurant = poll.votes
@@ -90,7 +99,7 @@ export class LunchGroupPollService {
 
       for (const user of poll.votes.map((vote) => vote.user)) {
         ChatGateway.userSockets.get(user._id.toString())?.join(group.chatRoom.toString());
-        LunchGroupGateway.userSockets.get(user._id.toString())?.join(group._id.toString());
+        this.lunchGroupGateway.addUserToRoom(user, group._id);
       }
 
       this.socketServer

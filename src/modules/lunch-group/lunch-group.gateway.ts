@@ -405,9 +405,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       });
 
       if (!poll) return { success: false, message: 'Sondage de groupe inexistant' };
+      if (poll.status !== LunchGroupStatus.open)
+        return { success: false, message: 'Sondage déjà cloturé' };
       if (!restaurant) return { success: false, message: 'Restaurant inexistant' };
-      if (poll.votes.some((vote) => vote.user.toString() === user._id.toString()))
-        return { success: false, message: 'Vous avez déjà voté pour ce sondage' };
       if (
         poll.allowedRestaurants.length > 0 &&
         !poll.allowedRestaurants.some(
@@ -416,7 +416,18 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       )
         return { success: false, message: "Ce restaurant n'est pas autorisé" };
 
-      poll.votes.push({ user, restaurant });
+      if (!poll.votes.some((vote) => vote.user.toString() === user._id.toString()))
+        poll.votes.push({ user, restaurant });
+      else
+        poll.votes = poll.votes.reduce(
+          (acc, vote) => [
+            ...acc,
+            vote.user.toString() === user._id.toString()
+              ? { ...vote, restaurant: pollData.restaurantId }
+              : vote,
+          ],
+          [],
+        );
       await poll.save();
       this.emitVoteGroupPoll(this.server.to(organization._id.toString()), {
         pollId: poll._id,
@@ -465,6 +476,24 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
   ) {
     Logger.log(`Emitting vote group poll`);
     return eventTarget.emit(LunchGroupEmittedEvents.addGroupPollEntry, voteData);
+  }
+
+  @AsyncApiSub({
+    channel: LunchGroupEmittedEvents.addGroupPollEntry,
+    summary: 'Add group poll vote entry',
+    description: 'Notify clients that a new group poll vote entry has been created',
+    message: {
+      payload: {
+        type: LunchGroupPoll,
+      },
+    },
+  })
+  emitCloseGroupPoll(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    voteData: { pollId: string },
+  ) {
+    Logger.log(`Closing vote group poll ${voteData.pollId}`);
+    return eventTarget.emit(LunchGroupEmittedEvents.closeGroupPoll, voteData);
   }
 
   @AsyncApiSub({
@@ -674,5 +703,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       _id: { $in: userIds },
       organizations: { $in: [organizationId] },
     });
+  }
+
+  addUserToRoom(user: User, roomId: string) {
+    LunchGroupGateway.userSockets.get(user._id.toString())?.join(roomId);
   }
 }
