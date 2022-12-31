@@ -1,3 +1,5 @@
+import { LunchGroupPoll } from '@schemas/lunchGroupPoll.schema';
+import { LunchGroup } from '@schemas/lunchGroup.schema';
 import { User } from './user.schema';
 import { ChatMessage } from './chatMessage.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
@@ -15,6 +17,10 @@ export class ChatRoom {
   users: User[];
 
   messages: ChatMessage[];
+
+  lunchGroup: LunchGroup;
+
+  LunchGroupPoll?: LunchGroupPoll;
 }
 
 const ChatRoomSchema = SchemaFactory.createForClass(ChatRoom);
@@ -23,6 +29,20 @@ ChatRoomSchema.virtual('messages', {
   ref: 'ChatMessage',
   localField: '_id',
   foreignField: 'room',
+});
+
+ChatRoomSchema.virtual('lunchGroup', {
+  ref: 'LunchGroup',
+  localField: '_id',
+  foreignField: 'chatRoom',
+  justOne: true,
+});
+
+ChatRoomSchema.virtual('LunchGroupPoll', {
+  ref: 'LunchGroupPoll',
+  localField: '_id',
+  foreignField: 'chatRoom',
+  justOne: true,
 });
 
 export { ChatRoomSchema };

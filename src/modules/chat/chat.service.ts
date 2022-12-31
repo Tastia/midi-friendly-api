@@ -1,3 +1,4 @@
+import { Organization } from '@schemas/oraganization.schema';
 import { ChatGateway } from './chat.gateway';
 import { ChatMessage, ChatMessageDocument } from '@schemas/chatMessage.schema';
 import { PostMessageDto } from './dto/sub/post-message.dto';
@@ -19,6 +20,18 @@ export class ChatService {
     @InjectModel(ChatMessage.name) private readonly chatMessageModel: Model<ChatMessageDocument>,
     @Inject(forwardRef(() => ChatGateway)) private readonly chatGateway: ChatGateway,
   ) {}
+
+  findUserRooms(user: User, organization: Organization) {
+    return this.chatRoomModel
+      .find({
+        organization: organization._id,
+        users: user._id,
+      })
+      .populate([
+        { path: 'lunchGroup', select: '_id name' },
+        { path: 'lunchGroupPoll', select: '_id name' },
+      ]);
+  }
 
   getPaginatedMessages(roomId: string, options: { offset: number; limit: number }) {
     return (this.chatMessageModel as any)
