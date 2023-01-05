@@ -4,12 +4,13 @@ import { ChatMessage, ChatMessageDocument } from '@schemas/chatMessage.schema';
 import { PostMessageDto } from './dto/sub/post-message.dto';
 import { User } from '@schemas/user.schema';
 import { ChatRoom, ChatRoomDocument } from '@schemas/chatRoom.schema';
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, forwardRef, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Server } from 'socket.io';
 import { FilterQuery, Model } from 'mongoose';
 import { PopulateQuery } from '@common/types/mongoose';
 import { LunchGroupDocument } from '@schemas/lunchGroup.schema';
+import { PaginateQuery } from '@shared/dto/paginate-query.dto';
 
 @Injectable()
 export class ChatService {
@@ -21,16 +22,25 @@ export class ChatService {
     @Inject(forwardRef(() => ChatGateway)) private readonly chatGateway: ChatGateway,
   ) {}
 
-  findUserRooms(user: User, organization: Organization) {
-    return this.chatRoomModel
-      .find({
-        organization: organization._id,
-        users: user._id,
-      })
-      .populate([
-        { path: 'lunchGroup', select: '_id name' },
-        { path: 'lunchGroupPoll', select: '_id name' },
-      ]);
+  findUserRooms(user: User, organization: Organization, params: PaginateQuery) {
+    Logger.debug('Resolving user rooms');
+    return (this.chatRoomModel as any)
+      .paginate(
+        {
+          organization: organization._id,
+          users: user._id,
+        },
+        {
+          offset: params.offset,
+          limit: params.limit,
+          populate: [
+            { path: 'lunchGroup', select: '_id label' },
+            { path: 'lunchGroupPoll', select: '_id label' },
+          ],
+          sort: { 'messages.createdAt': 1 },
+        },
+      )
+      .then((result) => result.docs);
   }
 
   getPaginatedMessages(roomId: string, options: { offset: number; limit: number }) {
