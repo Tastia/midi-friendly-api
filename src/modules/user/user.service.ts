@@ -63,6 +63,7 @@ export class UserService {
         ...(payload.type !== 'email' && { userId: payload.userId }),
       },
       organizations: [],
+      onboarding: { mapsApp: false, adminApp: false },
     });
   }
 

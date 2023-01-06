@@ -17,8 +17,8 @@ export class User {
   @Transform(({ value }) => value.toString())
   _id: mongoose.Types.ObjectId;
 
-  @Prop({ type: UserOnboardingState, default: { mapsApp: false, adminApp: false } })
-  onboarding?: UserOnboardingState;
+  @Prop({ type: UserOnboardingState })
+  onboarding: UserOnboardingState;
 
   @ApiProperty()
   @Prop()

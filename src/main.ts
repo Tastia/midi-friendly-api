@@ -10,13 +10,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import * as WinstonCloudWatch from 'winston-cloudwatch';
-
-import {
-  AsyncApiDocumentBuilder,
-  AsyncApiModule,
-  AsyncApiService,
-  AsyncServerObject,
-} from 'nestjs-asyncapi';
+import { AsyncApiDocumentBuilder, AsyncApiModule } from 'nestjs-asyncapi';
 
 const errorPrinter = winston.format((info) => {
   if (!info.error) return info;
