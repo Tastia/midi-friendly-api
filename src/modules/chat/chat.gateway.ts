@@ -72,8 +72,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
         isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
       }));
 
-    this.emitUserConnected(client.broadcast.to(organization._id.toString()), user._id.toString());
-
     this.emitSetUserList(
       client,
       connectedUsers as Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
