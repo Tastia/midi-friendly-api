@@ -103,9 +103,17 @@ export class RegisterAccountPayload extends LinkAccountPayload {
 }
 
 export class UserOnboardingState {
-  @Prop()
-  mapsApp?: boolean;
+  @Prop({ type: Boolean, default: false })
+  mapsApp: boolean;
 
-  @Prop()
-  adminApp?: boolean;
+  @Prop({ type: Boolean, default: false })
+  adminApp: boolean;
+}
+
+export class UserOnboarding {
+  @Prop({ type: Boolean })
+  mapsApp: boolean;
+
+  @Prop({ type: Boolean })
+  adminApp: boolean;
 }

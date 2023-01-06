@@ -97,7 +97,7 @@ export class AuthService {
       email,
       avatar,
       admin,
-      onboarded: adminApp ? user.onboarding?.adminApp ?? false : user.onboarding?.mapsApp ?? false,
+      onboarded: user?.onboarded ?? false,
     };
   }
 

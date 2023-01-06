@@ -63,7 +63,6 @@ export class UserService {
         ...(payload.type !== 'email' && { userId: payload.userId }),
       },
       organizations: [],
-      onboarding: { mapsApp: false, adminApp: false },
     });
   }
 
@@ -271,11 +270,7 @@ export class UserService {
       },
       {
         $set: {
-          onboarding: {
-            ...user.onboarding,
-            ...(app === 'admin' && { adminApp: true }),
-            ...(app === 'client' && { mapsApp: true }),
-          },
+          onboarded: true,
         },
       },
     );
