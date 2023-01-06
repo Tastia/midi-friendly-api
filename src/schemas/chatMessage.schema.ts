@@ -23,6 +23,9 @@ export class ChatMessage {
 
   @Prop({ type: Message })
   message: Message;
+
+  @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }])
+  readBy: User[];
 }
 
 const ChatMessageSchema = SchemaFactory.createForClass(ChatMessage);

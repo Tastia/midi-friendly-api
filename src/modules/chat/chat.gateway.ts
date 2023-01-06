@@ -19,6 +19,13 @@ import { ActiveUser } from '@common/decorators/user.decorator';
 import { User } from '@schemas/user.schema';
 import { WsAuth } from '@common/decorators/ws-auth.decorator';
 import { EventsMap } from 'node_modules/socket.io/dist/typed-events';
+import { UserService } from '@modules/user/user.service';
+import { ActiveOrganization } from '@common/decorators/organization.decorator';
+import { LunchGroupGateway } from '@modules/lunch-group/lunch-group.gateway';
+import { Organization } from '@schemas/oraganization.schema';
+import { LunchGroupEmittedEvents } from '@common/types/lunchGroup';
+import { SetUserListDto } from '@modules/lunch-group/sub-dto/set-user-list.dto';
+import { AsyncApiSub } from 'nestjs-asyncapi';
 
 @WebSocketGateway(8080, { namespace: 'chat', cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, OnGatewayInit {
@@ -26,6 +33,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
   public static userSockets: Map<string, Socket> = new Map<string, Socket>();
 
   constructor(
+    private readonly userService: UserService,
     @Inject(forwardRef(() => AuthService)) private readonly authService: AuthService,
     @Inject(forwardRef(() => ChatService)) private readonly chatService: ChatService,
   ) {}
@@ -50,6 +58,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
       Logger.debug(`User ${user._id.toString()} joined room ${room._id}`);
       client.join(room._id.toString());
     }
+
+    const connectedUsers = (
+      await this.userService.find({ organizations: { $in: user.organizations } })
+    )
+      .map((user) => user.toObject())
+      .map((user) => ({
+        ...user,
+        credentials: {
+          email: user.credentials.email,
+          type: user.credentials.type,
+        },
+        isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
+      }));
+
+    this.emitUserConnected(client.broadcast.to(organization._id.toString()), user._id.toString());
+
+    this.emitSetUserList(
+      client,
+      connectedUsers as Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
+    );
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
@@ -86,6 +114,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
     } catch (err) {
       return { success: false, message: err.message || 'Une erreur est survenue' };
     }
+  }
+
+  @AsyncApiSub({
+    channel: ChatGatewayEmittedEvents.setUserList,
+    summary: 'Set user list',
+    description: 'Set initial list of users connected to the organization when a user connects',
+    message: {
+      payload: {
+        type: SetUserListDto,
+      },
+    },
+  })
+  emitSetUserList(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    users: Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
+  ) {
+    Logger.log(`Emitting set user list - ${users.length}`);
+    return eventTarget.emit(ChatGatewayEmittedEvents.setUserList, { users });
   }
 
   emitCreateMessage(eventTarget: BroadcastOperator<EventsMap, any> | Socket, message: ChatMessage) {

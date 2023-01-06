@@ -3,7 +3,15 @@ import { User } from '@schemas/user.schema';
 import { Organization } from '@schemas/oraganization.schema';
 import { PaginateQuery } from '@shared/dto/paginate-query.dto';
 import { ChatService } from './chat.service';
-import { Controller, Get, Param, Query, ValidationPipe, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  ValidationPipe,
+  BadRequestException,
+  Post,
+} from '@nestjs/common';
 import { ActiveOrganization } from '@common/decorators/organization.decorator';
 import { ActiveUser } from '@common/decorators/user.decorator';
 import { JWTAuth } from '@common/decorators/jwt-auth.decorator';
@@ -40,5 +48,12 @@ export class ChatController {
     if (!user || !organization || app !== 'client')
       throw new BadRequestException(`Accès non autorisé, ${app}, ${!!user}, ${!!organization}`);
     return this.chatService.findUserRooms(user, organization, params);
+  }
+
+  @JWTAuth()
+  @Post('mark-room-as-read/:roomId')
+  markRoomMessagesAsRead(@Param('roomId') roomId: string, @ActiveUser() user: User) {
+    if (!user) throw new BadRequestException('Accès non autorisé');
+    return this.chatService.markRoomMessagesAsRead(roomId, user);
   }
 }

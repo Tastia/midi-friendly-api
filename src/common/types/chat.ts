@@ -23,6 +23,7 @@ export class Message {
 
 export enum ChatGatewayEmittedEvents {
   addNewMessage = 'addNewMessage',
+  setUserList = 'setUserList',
 }
 
 export enum ChatGatewayReceivedEvents {

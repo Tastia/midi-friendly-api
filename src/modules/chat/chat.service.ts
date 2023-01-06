@@ -36,11 +36,36 @@ export class ChatService {
           populate: [
             { path: 'lunchGroup', select: '_id label' },
             { path: 'lunchGroupPoll', select: '_id label' },
+            { path: 'messages', options: { sort: { _id: -1 }, limit: 1 }, justOne: true },
           ],
           sort: { 'messages.createdAt': 1 },
         },
       )
-      .then((result) => result.docs);
+      .then((result) =>
+        result.docs
+          .map((room) => room.toObject())
+          .map(({ messages, ...room }) => ({ ...room, lastMessage: messages[0] || null })),
+      );
+  }
+
+  async markRoomMessagesAsRead(roomId: string, user: User) {
+    const room = await this.chatRoomModel.findOne({ _id: roomId, users: user._id });
+    if (!room) throw new Error('Room not found or user not in room');
+
+    // GET MESSAGES THAT ARE NOT READ BY USER
+    const messages = await this.chatMessageModel.find({ room: roomId, readBy: { $ne: user._id } });
+
+    Logger.debug(`Marking ${messages.length} messages as read`);
+    await Promise.all(
+      messages.map(async (message) => {
+        if (!message.readBy) message.readBy = [];
+        message.readBy.push(user);
+        message.markModified('readBy');
+        await message.save();
+      }),
+    );
+
+    return { success: true };
   }
 
   getPaginatedMessages(roomId: string, options: { offset: number; limit: number }) {
@@ -78,8 +103,12 @@ export class ChatService {
       user: user._id,
       room: messageData.roomId,
       message: messageData.message,
+      readBy: [user._id],
     });
 
-    return message.populate({ path: 'user', select: '_id firstName lastName avatar' });
+    return message.populate({
+      path: 'user',
+      select: '_id firstName lastName avatar',
+    });
   }
 }

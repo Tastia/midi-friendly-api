@@ -1,3 +1,4 @@
+import { UserModule } from '@modules/user/user.module';
 import { OrganizationModule } from '@modules/organization/organization.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { ChatMessage, ChatMessageSchema } from '@schemas/chatMessage.schema';
@@ -12,12 +13,13 @@ import { ChatInterfaceService } from './chat-interface.service';
 @Global()
 @Module({
   imports: [
+    forwardRef(() => AuthModule),
     MongooseModule.forFeature([
       { name: ChatRoom.name, schema: ChatRoomSchema },
       { name: ChatMessage.name, schema: ChatMessageSchema },
     ]),
     OrganizationModule,
-    forwardRef(() => AuthModule),
+    UserModule,
   ],
   providers: [ChatService, ChatInterfaceService, ChatGateway],
   controllers: [ChatController],
