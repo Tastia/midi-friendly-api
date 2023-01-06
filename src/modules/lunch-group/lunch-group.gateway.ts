@@ -189,9 +189,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
       this.AddUserToLocalGroup(user._id.toString(), group._id.toString());
       client.join(group._id.toString());
 
-      ChatGateway.userSockets.get(user._id.toString())?.join(group.chatRoom.toString());
-
+      this.chatService.addUserToRoom(user, group.chatRoom.toString());
       this.emitAddGroup(this.server.to(organization._id.toString()), group);
+
       return { success: true };
     } catch (err) {
       return { success: false, message: err.message };
@@ -302,7 +302,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
         userId: user._id.toString(),
       });
 
-      await this.chatService.addUserToRoom(user, group.chatRoom.toString());
+      await this.chatService.addUserToRoom(user, group.chatRoom.toString(), true);
 
       return { success: true };
     } catch (err) {

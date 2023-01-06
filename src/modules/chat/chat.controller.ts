@@ -23,9 +23,7 @@ export class ChatController {
   @JWTAuth()
   @Get(':roomId')
   getRoom(@Param('roomId') roomId: string) {
-    return this.chatService.findOneRoom({ _id: roomId }, [
-      { path: 'users', select: '_id firstName lastName avatar' },
-    ]);
+    return this.chatService.retriveRoomData(roomId);
   }
 
   @JWTAuth()

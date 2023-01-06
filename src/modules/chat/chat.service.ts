@@ -7,7 +7,7 @@ import { ChatRoom, ChatRoomDocument } from '@schemas/chatRoom.schema';
 import { Inject, Injectable, forwardRef, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Server } from 'socket.io';
-import { FilterQuery, Model } from 'mongoose';
+import { AggregatePaginateModel, FilterQuery, Model } from 'mongoose';
 import { PopulateQuery } from '@common/types/mongoose';
 import { LunchGroupDocument } from '@schemas/lunchGroup.schema';
 import { PaginateQuery } from '@shared/dto/paginate-query.dto';
@@ -17,35 +17,61 @@ export class ChatService {
   public socketServer: Server = null;
 
   constructor(
-    @InjectModel(ChatRoom.name) private readonly chatRoomModel: Model<ChatRoomDocument>,
+    @InjectModel(ChatRoom.name)
+    private readonly chatRoomModel: AggregatePaginateModel<ChatRoomDocument>,
     @InjectModel(ChatMessage.name) private readonly chatMessageModel: Model<ChatMessageDocument>,
     @Inject(forwardRef(() => ChatGateway)) private readonly chatGateway: ChatGateway,
   ) {}
 
   findUserRooms(user: User, organization: Organization, params: PaginateQuery) {
     Logger.debug('Resolving user rooms');
-    return (this.chatRoomModel as any)
-      .paginate(
-        {
-          organization: organization._id,
-          users: user._id,
+
+    const $aggregate = this.chatRoomModel.aggregate([
+      {
+        $match: { users: user._id },
+      },
+      {
+        $lookup: {
+          from: 'lunchgroups',
+          localField: '_id',
+          foreignField: 'chatRoom',
+          as: 'lunchGroup',
+          pipeline: [{ $project: { _id: 1, label: 1 } }],
         },
-        {
-          offset: params.offset,
-          limit: params.limit,
-          populate: [
-            { path: 'lunchGroup', select: '_id label' },
-            { path: 'lunchGroupPoll', select: '_id label' },
-            { path: 'messages', options: { sort: { _id: -1 }, limit: 1 }, justOne: true },
-          ],
-          sort: { 'messages.createdAt': 1 },
+      },
+      {
+        $lookup: {
+          from: 'lunchgrouppolls',
+          localField: '_id',
+          foreignField: 'chatRoom',
+          as: 'lunchGroupPoll',
+          pipeline: [{ $project: { _id: 1, label: 1 } }],
         },
-      )
-      .then((result) =>
-        result.docs
-          .map((room) => room.toObject())
-          .map(({ messages, ...room }) => ({ ...room, lastMessage: messages[0] || null })),
-      );
+      },
+      {
+        $lookup: {
+          from: 'chatmessages',
+          localField: '_id',
+          foreignField: 'room',
+          as: 'lastMessage',
+          pipeline: [{ $sort: { _id: -1 } }, { $limit: 1 }],
+        },
+      },
+      { $sort: { 'lastMessage.createdAt': -1 } },
+      {
+        $set: {
+          lunchGroup: { $arrayElemAt: ['$lunchGroup', 0] },
+          lunchGroupPoll: { $arrayElemAt: ['$lunchGroupPoll', 0] },
+          lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+        },
+      },
+    ]);
+    return this.chatRoomModel
+      .aggregatePaginate($aggregate, {
+        offset: params.offset,
+        limit: params.limit,
+      })
+      .then((result) => result.docs);
   }
 
   async markRoomMessagesAsRead(roomId: string, user: User) {
@@ -96,6 +122,16 @@ export class ChatService {
     return this.chatRoomModel.create({
       users: [user._id],
     });
+  }
+
+  async retriveRoomData(roomId: string) {
+    const room = await this.chatRoomModel.findById(roomId).populate([
+      { path: 'lunchGroup', select: '_id label' },
+      { path: 'lunchGroupPoll', select: '_id label' },
+      { path: 'messages', options: { sort: { _id: -1 }, limit: 1 }, justOne: true },
+    ]);
+
+    return { ...room.toObject(), lastMessage: room.messages[0] || null };
   }
 
   async createMessage(user: User, messageData: PostMessageDto) {

@@ -6,7 +6,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Transform } from 'class-transformer';
 import mongoose, { Document } from 'mongoose';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const mongoosePaginate = require('mongoose-paginate-v2');
+const aggregatePaginate = require('mongoose-aggregate-paginate-v2');
 
 export type ChatRoomDocument = ChatRoom & Document;
 
@@ -47,6 +47,6 @@ ChatRoomSchema.virtual('lunchGroupPoll', {
   justOne: true,
 });
 
-ChatRoomSchema.plugin(mongoosePaginate);
+ChatRoomSchema.plugin(aggregatePaginate);
 
 export { ChatRoomSchema };

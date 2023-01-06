@@ -22,8 +22,11 @@ export class Message {
 }
 
 export enum ChatGatewayEmittedEvents {
+  addChatRoom = 'addChatRoom',
   addNewMessage = 'addNewMessage',
   setUserList = 'setUserList',
+  userConnected = 'userConnected',
+  userDisconnected = 'userDisconnected',
 }
 
 export enum ChatGatewayReceivedEvents {

@@ -1,3 +1,4 @@
+import { ChatRoom } from '@schemas/chatRoom.schema';
 import { ChatMessage } from '@schemas/chatMessage.schema';
 import { PostMessageDto } from './dto/sub/post-message.dto';
 import { ChatGatewayReceivedEvents, ChatGatewayEmittedEvents } from '@common/types/chat';
@@ -47,7 +48,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
     const { authorization } = client.handshake.headers;
     const user = await this.authService.validateAccessToken(authorization.split(' ')[1], false);
     if (!user) {
-      client.disconnect();
+      return client.disconnect();
     }
 
     Logger.debug(`User ${user._id.toString()} connected to chat gateway`);
@@ -59,39 +60,42 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
       client.join(room._id.toString());
     }
 
-    const connectedUsers = (
-      await this.userService.find({ organizations: { $in: user.organizations } })
-    )
-      .map((user) => user.toObject())
-      .map((user) => ({
-        ...user,
-        credentials: {
-          email: user.credentials.email,
-          type: user.credentials.type,
-        },
-        isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
-      }));
+    const connectedUsers = await this.getConnectedUserSiblings(user);
+    Logger.debug(`Connected users: ${connectedUsers.map((u) => u._id.toString())}`);
 
     this.emitSetUserList(
       client,
       connectedUsers as Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
     );
+    for (const chatUser of connectedUsers) {
+      const userSocket = LunchGroupGateway.userSockets.get(chatUser._id.toString());
+      if (userSocket) this.emitUserConnected(userSocket, chatUser._id.toString());
+    }
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
     const { authorization } = client.handshake.headers;
     const user = await this.authService.validateAccessToken(authorization.split(' ')[1], false);
+    if (!user) {
+      return client.disconnect();
+    }
 
     Logger.debug(`User ${user._id.toString()} disconnected from chat gateway`);
     ChatGateway.userSockets.delete(user._id.toString());
 
     const chatrooms = await this.chatService.findRoom({ users: user._id });
     for (const room of chatrooms) client.leave(room._id);
+
+    const connectedUsers = await this.getConnectedUserSiblings(user);
+    for (const chatUser of connectedUsers) {
+      const userSocket = LunchGroupGateway.userSockets.get(chatUser._id.toString());
+      if (userSocket) this.emitUserDisconnected(userSocket, chatUser._id.toString());
+    }
   }
 
   @WsAuth()
   @SubscribeMessage(ChatGatewayReceivedEvents.sendMessage)
-  async postMessage(
+  private async postMessage(
     @ConnectedSocket() client: Socket,
     @ActiveUser() user: User,
     @MessageBody() data: PostMessageDto,
@@ -124,7 +128,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
       },
     },
   })
-  emitSetUserList(
+  private emitSetUserList(
     eventTarget: BroadcastOperator<EventsMap, any> | Socket,
     users: Array<Omit<User, 'organizations'> & { isOnline: boolean }>,
   ) {
@@ -132,7 +136,51 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
     return eventTarget.emit(ChatGatewayEmittedEvents.setUserList, { users });
   }
 
-  emitCreateMessage(eventTarget: BroadcastOperator<EventsMap, any> | Socket, message: ChatMessage) {
+  private emitUserConnected(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    userId: string,
+  ) {
+    return eventTarget.emit(ChatGatewayEmittedEvents.userConnected, { userId });
+  }
+
+  private emitUserDisconnected(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    userId: string,
+  ) {
+    return eventTarget.emit(ChatGatewayEmittedEvents.userDisconnected, { userId });
+  }
+
+  private emitAddRoom(eventTarget: BroadcastOperator<EventsMap, any> | Socket, room: ChatRoom) {
+    return eventTarget.emit(ChatGatewayEmittedEvents.addChatRoom, { room });
+  }
+
+  private emitCreateMessage(
+    eventTarget: BroadcastOperator<EventsMap, any> | Socket,
+    message: ChatMessage,
+  ) {
     return eventTarget.emit(ChatGatewayEmittedEvents.addNewMessage, { message });
+  }
+
+  addUserToRoom(roomId: string, user: User) {
+    const client = ChatGateway.userSockets.get(user._id.toString());
+    if (client) client.join(roomId);
+  }
+
+  pushRoomToUser(user: User, room: ChatRoom) {
+    const client = ChatGateway.userSockets.get(user._id.toString());
+    if (client) this.emitAddRoom(client, room);
+  }
+
+  async getConnectedUserSiblings(user: User) {
+    return (await this.userService.find({ organizations: { $in: user.organizations } }))
+      .map((user) => user.toObject())
+      .map((user) => ({
+        ...user,
+        credentials: {
+          email: user.credentials.email,
+          type: user.credentials.type,
+        },
+        isOnline: LunchGroupGateway.userSockets.has(user._id.toString()),
+      }));
   }
 }
