@@ -371,6 +371,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     try {
       const poll = await this.lunchGroupPollService.createPoll(pollData, organization, user);
       this.emitCreateGroupPoll(this.server.to(organization._id.toString()), poll);
+      this.chatService.addUserToRoom(user, poll.chatRoom.toString());
       return { success: true };
     } catch (err) {
       return { success: false, message: err.message };
@@ -433,6 +434,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
         pollId: poll._id,
         vote: { user: user._id.toString(), restaurant: restaurant._id.toString() },
       });
+      // this.chatService.addUserToRoom(user, poll.chatRoom.toString(), true);
       return { success: true };
     } catch (err) {
       return { success: false, message: err.message };
