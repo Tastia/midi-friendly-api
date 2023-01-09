@@ -11,6 +11,7 @@ import {
   ValidationPipe,
   BadRequestException,
   Post,
+  Logger,
 } from '@nestjs/common';
 import { ActiveOrganization } from '@common/decorators/organization.decorator';
 import { ActiveUser } from '@common/decorators/user.decorator';
@@ -38,14 +39,14 @@ export class ChatController {
   @JWTAuth()
   @Get()
   getUserRooms(
-    @ActiveOrganization() organization: Organization,
     @ActiveUser() user: User,
     @CurrentApp() app: RequesterApp,
     @Query(new ValidationPipe({ transform: true })) params: PaginateQuery,
   ) {
-    if (!user || !organization || app !== 'client')
-      throw new BadRequestException(`Accès non autorisé, ${app}, ${!!user}, ${!!organization}`);
-    return this.chatService.findUserRooms(user, organization, params);
+    Logger.debug(`getUserRooms: ${app}, ${!!user}`);
+    if (!user || app !== 'client')
+      throw new BadRequestException(`Accès non autorisé, ${app}, ${!!user}`);
+    return this.chatService.findUserRooms(user, params);
   }
 
   @JWTAuth()

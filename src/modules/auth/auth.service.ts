@@ -81,7 +81,7 @@ export class AuthService {
       const payload = throwOnErr
         ? await this.jwtService.verifyAsync(token)
         : this.jwtService.decode(token);
-      return await this.userModel.findOne({ _id: payload._id });
+      return await this.userModel.findOne({ _id: payload?._id ?? null });
     } catch (error) {
       Logger.error(error);
       return null;

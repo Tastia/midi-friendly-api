@@ -22,9 +22,9 @@ export class GatewayGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       const client: Socket = context.switchToWs().getClient<Socket>();
-      const authToken: string = client.handshake.headers.authorization;
-      const organziationId: string = client.handshake.headers.organizationid as string;
-      const user = await this.authService.validateAccessToken(authToken.split(' ')[1]);
+      const accessToken: string = client.handshake.auth.accessToken as string;
+      const organziationId: string = client.handshake.auth.organizationId as string;
+      const user = await this.authService.validateAccessToken(accessToken);
       const organization = await this.organizationService.findOne({ _id: organziationId });
 
       this.logger.debug(

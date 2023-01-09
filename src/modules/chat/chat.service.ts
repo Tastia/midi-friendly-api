@@ -23,7 +23,7 @@ export class ChatService {
     @Inject(forwardRef(() => ChatGateway)) private readonly chatGateway: ChatGateway,
   ) {}
 
-  findUserRooms(user: User, organization: Organization, params: PaginateQuery) {
+  findUserRooms(user: User, params: PaginateQuery) {
     Logger.debug('Resolving user rooms');
 
     const $aggregate = this.chatRoomModel.aggregate([

@@ -88,9 +88,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
   }
 
   async handleConnection(@ConnectedSocket() client: Socket) {
-    const { authorization, organizationid } = client.handshake.headers;
-    const user = await this.authService.validateAccessToken(authorization.split(' ')[1], false);
-    const organization = await this.organizationService.findOne({ _id: organizationid ?? 'N/A' });
+    const { accessToken, organizationId } = client.handshake.auth;
+    const user = await this.authService.validateAccessToken(accessToken, false);
+    const organization = await this.organizationService.findOne({ _id: organizationId ?? 'N/A' });
     if (!user || !organization) {
       client.disconnect();
       throw new WsException('Unauthorized');
@@ -146,9 +146,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
-    const { authorization, organizationid } = client.handshake.headers;
-    const user = await this.authService.validateAccessToken(authorization.split(' ')[1], false);
-    const organization = await this.organizationService.findOne({ _id: organizationid });
+    const { accessToken, organizationId } = client.handshake.auth;
+    const user = await this.authService.validateAccessToken(accessToken, false);
+    const organization = await this.organizationService.findOne({ _id: organizationId });
 
     LunchGroupGateway.userSockets.delete(user._id.toString());
 

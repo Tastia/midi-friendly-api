@@ -45,8 +45,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
   }
 
   async handleConnection(@ConnectedSocket() client: Socket) {
-    const { authorization } = client.handshake.headers;
-    const user = await this.authService.validateAccessToken(authorization.split(' ')[1], false);
+    const { accessToken } = client.handshake.auth;
+    const user = await this.authService.validateAccessToken(accessToken, false);
     if (!user) {
       return client.disconnect();
     }
@@ -74,8 +74,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
-    const { authorization } = client.handshake.headers;
-    const user = await this.authService.validateAccessToken(authorization.split(' ')[1], false);
+    const { accessToken } = client.handshake.auth;
+    const user = await this.authService.validateAccessToken(accessToken, false);
     if (!user) {
       return client.disconnect();
     }
