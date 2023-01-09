@@ -1,11 +1,12 @@
+import { GatewayGuardOptions } from '@common/types/auth';
 import { GatewayGuard } from './../guards/gateway.guard';
-import { applyDecorators, UseGuards } from '@nestjs/common';
+import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
-export function WsAuth() {
+export function WsAuth(guardOptions?: GatewayGuardOptions) {
   return applyDecorators(
-    // UseGuards(),
+    SetMetadata('wsGuardOptions', guardOptions),
     UseGuards(GatewayGuard),
     ApiBearerAuth(),
     ApiUnauthorizedResponse({

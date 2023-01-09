@@ -5,6 +5,11 @@ import { Exclude, Transform } from 'class-transformer';
 import mongoose from 'mongoose';
 import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
+export type GatewayGuardOptions = {
+  user?: boolean;
+  organization?: boolean;
+};
+
 export enum InvitationType {
   Link = 'link',
   Email = 'email',

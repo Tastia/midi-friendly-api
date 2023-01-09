@@ -93,7 +93,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayConnection, On
     }
   }
 
-  @WsAuth()
+  @WsAuth({ organization: false })
   @SubscribeMessage(ChatGatewayReceivedEvents.sendMessage)
   private async postMessage(
     @ConnectedSocket() client: Socket,
