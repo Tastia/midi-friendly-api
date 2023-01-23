@@ -153,15 +153,26 @@ export class GoogleMapsService {
       'GoogleMapsService.getRestaurantsNearby',
     );
     try {
-      const locations = await this.GMapsClient.placesNearby({
-        params: {
-          location: `${coordinates.latitude},${coordinates.longitude}`,
-          radius: 500,
-          type: 'restaurant',
-          key: process.env.GOOGLE_MAPS_API_KEY,
-        },
-        timeout: 1000000,
-      }).then((data) => data.data.results);
+      let nextToken = '';
+      let resolvingComplete = false;
+      const locations = [];
+
+      while (!resolvingComplete) {
+        const data = await this.GMapsClient.placesNearby({
+          params: {
+            location: `${coordinates.latitude},${coordinates.longitude}`,
+            radius: 500,
+            type: 'restaurant',
+            key: process.env.GOOGLE_MAPS_API_KEY,
+            ...(nextToken && { pagetoken: nextToken }),
+          },
+          timeout: 1000000,
+        }).then((data) => data.data);
+
+        locations.push(...data.results);
+        if (data.next_page_token) nextToken = data.next_page_token;
+        else resolvingComplete = true;
+      }
 
       const [restaurants] = await rateLimitPromiseQueue<BaseRestaurant>(
         locations.map((location) => () => this.mapRestaurantFullData(location)),
@@ -189,6 +200,18 @@ export class GoogleMapsService {
         maxheight: options?.maxLength ?? 400,
       },
       responseType: 'stream',
+    });
+  }
+
+  getPlacePhotoBuffer(reference: string, options?: { maxWidth?: number; maxLength?: number }) {
+    return this.GMapsClient.placePhoto({
+      params: {
+        photoreference: reference,
+        key: process.env.GOOGLE_MAPS_API_KEY,
+        maxwidth: options?.maxWidth ?? 400,
+        maxheight: options?.maxLength ?? 400,
+      },
+      responseType: 'arraybuffer',
     });
   }
 
