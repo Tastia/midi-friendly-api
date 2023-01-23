@@ -153,25 +153,45 @@ export class GoogleMapsService {
       'GoogleMapsService.getRestaurantsNearby',
     );
     try {
+      let page = 1;
       let nextToken = '';
       let resolvingComplete = false;
       const locations = [];
 
       while (!resolvingComplete) {
-        const data = await this.GMapsClient.placesNearby({
-          params: {
-            location: `${coordinates.latitude},${coordinates.longitude}`,
-            radius: 500,
-            type: 'restaurant',
-            key: process.env.GOOGLE_MAPS_API_KEY,
-            ...(nextToken && { pagetoken: nextToken }),
-          },
-          timeout: 1000000,
-        }).then((data) => data.data);
+        try {
+          Logger.debug(
+            `Retriving page ${page} of restaurants nearby - page token : ${nextToken}`,
+            'GoogleMapsService.getRestaurantsNearby',
+          );
+          if (page > 1) await this.sleep(2500);
+          const data = await this.GMapsClient.placesNearby({
+            params: {
+              location: `${coordinates.latitude},${coordinates.longitude}`,
+              radius: 500,
+              type: 'restaurant',
+              key: process.env.GOOGLE_MAPS_API_KEY,
+              ...(nextToken && { pagetoken: nextToken }),
+            },
+            timeout: 1000000,
+          }).then((data) => data.data);
 
-        locations.push(...data.results);
-        if (data.next_page_token) nextToken = data.next_page_token;
-        else resolvingComplete = true;
+          locations.push(...data.results);
+          if (data.next_page_token) nextToken = data.next_page_token;
+          else resolvingComplete = true;
+          page++;
+        } catch (err) {
+          nextToken = '';
+          resolvingComplete = true;
+          Logger.error(
+            `Unable to retrive page ${page} of restaurants nearby - page token : ${nextToken}`,
+            'GoogleMapsService.getRestaurantsNearby',
+          );
+          Logger.error(
+            err?.response?.data?.error_message ?? 'Unexpected GMAPS unknown error',
+            'GoogleMapsService.getRestaurantsNearby',
+          );
+        }
       }
 
       const [restaurants] = await rateLimitPromiseQueue<BaseRestaurant>(
@@ -248,5 +268,9 @@ export class GoogleMapsService {
             component.types.includes('country' as AddressType),
           )?.long_name ?? 'N/A',
       };
+  }
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
