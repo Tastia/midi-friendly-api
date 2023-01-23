@@ -27,6 +27,7 @@ async function bootstrap() {
         errorPrinter(),
         nestWinstonModuleUtilities.format.nestLike('atc-worker', {
           prettyPrint: true,
+          colors: true,
         }),
       ),
       transports: [

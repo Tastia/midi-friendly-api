@@ -30,6 +30,7 @@ async function bootstrap() {
         errorPrinter(),
         nestWinstonModuleUtilities.format.nestLike('midi-friendly-api', {
           prettyPrint: true,
+          colors: true,
         }),
       ),
       transports: [
