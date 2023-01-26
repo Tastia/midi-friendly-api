@@ -15,6 +15,19 @@ export interface BaseRestaurant {
   openingHours: string[];
   website: string;
   phoneNumber: string;
+  services: {
+    delivery: boolean;
+    takeout: boolean;
+    dineIn: boolean;
+    wine: boolean;
+    beer: boolean;
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+    reservable: boolean;
+    vegetarian: boolean;
+  };
+  types: string[];
 }
 
 @Schema()

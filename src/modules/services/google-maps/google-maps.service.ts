@@ -75,7 +75,7 @@ export class GoogleMapsService {
     }
   }
 
-  async getRestaurantDetails(placeId: string): Promise<Place> {
+  async getRestaurantDetails(placeId: string): Promise<Place & Record<string, any>> {
     try {
       return this.GMapsClient.placeDetails({
         params: {
@@ -92,6 +92,18 @@ export class GoogleMapsService {
             'opening_hours',
             'website',
             'formatted_phone_number',
+            'delivery',
+            'takeaway',
+            'dine_in',
+            'reservable',
+            'serves_beer',
+            'serves_wine',
+            'serves_breakfast',
+            'serves_lunch',
+            'serves_dinner',
+            'serves_vegetarian_food',
+            'takeout',
+            'types',
           ],
         },
         timeout: 1000,
@@ -178,6 +190,19 @@ export class GoogleMapsService {
         openingHours: restaurantDetails?.opening_hours?.weekday_text ?? [],
         website: restaurantDetails?.website ?? '',
         phoneNumber: restaurantDetails?.formatted_phone_number ?? '',
+        services: {
+          delivery: restaurantDetails?.delivery ?? false,
+          takeout: restaurantDetails?.takeout ?? false,
+          dineIn: restaurantDetails?.dine_in ?? false,
+          wine: restaurantDetails?.serves_wine ?? false,
+          beer: restaurantDetails?.serves_beer ?? false,
+          breakfast: restaurantDetails?.serves_breakfast ?? false,
+          lunch: restaurantDetails?.serves_lunch ?? false,
+          dinner: restaurantDetails?.serves_dinner ?? false,
+          reservable: restaurantDetails?.reservable ?? false,
+          vegetarian: restaurantDetails?.serves_vegetarian_food ?? false,
+        },
+        types: restaurantDetails?.types ?? [],
       };
     } catch (err) {
       Logger.error(

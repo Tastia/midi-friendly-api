@@ -37,6 +37,7 @@ export class RestaurantService {
           openingHours: restaurant.openingHours,
           website: restaurant.website,
           phoneNumber: restaurant.phoneNumber,
+          services: restaurant.services,
         }),
       ),
     );
