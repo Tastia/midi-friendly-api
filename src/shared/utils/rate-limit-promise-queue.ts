@@ -30,6 +30,7 @@ export async function rateLimitPromiseQueue<T = any>(
       queue.on('idle', () => resolve([success, errors]));
       queue.on('error', (error) => errors.push(error));
       queue.addAll(promises);
+      if (!promises.length) resolve([success, errors]);
     } catch (err) {
       reject(err);
     }

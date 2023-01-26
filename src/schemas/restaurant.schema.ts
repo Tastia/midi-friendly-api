@@ -17,6 +17,9 @@ export class Restaurant {
   _id: mongoose.Types.ObjectId;
 
   @Prop()
+  placeId: string;
+
+  @Prop()
   name: string;
 
   @Prop({ type: Coordinates })

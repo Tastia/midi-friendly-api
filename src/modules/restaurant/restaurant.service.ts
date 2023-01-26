@@ -24,8 +24,9 @@ export class RestaurantService {
       restaurants.map((restaurant) =>
         this.restaurantModel.create({
           name: restaurant.name,
-          pageId: restaurant.placeId,
+          placeId: restaurant.placeId,
           coordinates: restaurant.coordinates,
+          address: restaurant.address,
           organization: new Types.ObjectId(organizationId),
           photos: restaurant.photos,
           priceLevel: restaurant.priceLevel,
@@ -34,6 +35,8 @@ export class RestaurantService {
             internal: [],
           },
           openingHours: restaurant.openingHours,
+          website: restaurant.website,
+          phoneNumber: restaurant.phoneNumber,
         }),
       ),
     );

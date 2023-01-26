@@ -17,6 +17,7 @@ export interface BaseRestaurant {
   phoneNumber: string;
 }
 
+@Schema()
 export class RestaurantPhotos {
   @Prop()
   reference: string;
@@ -26,6 +27,11 @@ export class RestaurantPhotos {
 
   @Prop()
   height: number;
+
+  @Prop({
+    get: (v: string) => (v ? `${process.env.AWS_S3_URL}${v}` : v),
+  })
+  url: string;
 }
 
 export class GoogleRestaurantRating {

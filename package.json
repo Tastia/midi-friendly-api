@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@asyncapi/generator": "^1.9.13",
+    "@aws-sdk/client-s3": "^3.254.0",
     "@aws-sdk/client-ses": "^3.234.0",
     "@chronicstone/mongoose-search": "^1.0.5",
     "@googlemaps/google-maps-services-js": "^3.3.16",

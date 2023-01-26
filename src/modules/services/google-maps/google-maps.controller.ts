@@ -15,4 +15,9 @@ export class GoogleMapsController {
   ) {
     return this.googleMapsService.serveImageFromGMapsRef(photoReference, options);
   }
+
+  @Get('place-date/:placeId')
+  getPlaceDate(@Param('placeId') placeId: string) {
+    return this.googleMapsService.getRestaurantData(placeId);
+  }
 }
