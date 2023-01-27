@@ -91,10 +91,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     const { accessToken, organizationId } = client.handshake.auth;
     const user = await this.authService.validateAccessToken(accessToken, false);
     const organization = await this.organizationService.findOne({ _id: organizationId ?? 'N/A' });
-    if (!user || !organization) {
-      client.disconnect();
-      throw new WsException('Unauthorized');
-    }
+    if (!user || !organization) return client.disconnect();
 
     Logger.debug(
       `User ${user._id.toString()} connected to organization ${organization._id.toString()}`,
@@ -149,6 +146,8 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
     const { accessToken, organizationId } = client.handshake.auth;
     const user = await this.authService.validateAccessToken(accessToken, false);
     const organization = await this.organizationService.findOne({ _id: organizationId });
+
+    if (!user || !organization) return;
 
     LunchGroupGateway.userSockets.delete(user._id.toString());
 
@@ -223,9 +222,9 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
         organization: organization._id,
       });
 
-      if (!group) throw new WsException('Group not found');
+      if (!group) return { success: false, message: 'Group not found' };
       if (group.owner.toString() !== user._id.toString())
-        throw new WsException('Unauthorized operation');
+        return { success: false, message: 'Opération non autorisée' };
 
       const udpatedGroup = await this.lunchGroupService.update(groupId, groupData);
       this.emitUpdateGroup(this.server.to(organization._id.toString()), udpatedGroup);
@@ -260,7 +259,7 @@ export class LunchGroupGateway implements OnGatewayConnection, OnGatewayConnecti
         organization: organization._id,
       });
 
-      if (!group) throw new WsException('Group not found');
+      if (!group) return { success: false, message: 'Group not found' };
       if (group.owner.toString() !== user._id.toString())
         return { success: false, message: 'Opération non autorisée' };
 
