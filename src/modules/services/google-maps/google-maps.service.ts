@@ -93,7 +93,6 @@ export class GoogleMapsService {
             'website',
             'formatted_phone_number',
             'delivery',
-            'takeaway',
             'dine_in',
             'reservable',
             'serves_beer',
