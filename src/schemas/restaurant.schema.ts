@@ -48,6 +48,12 @@ export class Restaurant {
 
   @Prop()
   phoneNumber?: string;
+
+  @Prop({ type: Object })
+  services: Record<string, boolean>;
+
+  @Prop()
+  types: string[];
 }
 
 const RestaurantSchema = SchemaFactory.createForClass(Restaurant);

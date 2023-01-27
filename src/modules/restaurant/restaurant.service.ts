@@ -38,6 +38,7 @@ export class RestaurantService {
           website: restaurant.website,
           phoneNumber: restaurant.phoneNumber,
           services: restaurant.services,
+          types: restaurant.types,
         }),
       ),
     );
