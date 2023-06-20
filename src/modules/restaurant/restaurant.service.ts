@@ -1,5 +1,5 @@
 import { BaseRestaurant } from '@common/types/restaurant';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Restaurant, RestaurantDocument } from '@schemas/restaurant.schema';
 import { FilterQuery, Model, Types } from 'mongoose';
@@ -9,6 +9,7 @@ import {
   PaginatedQuery,
   SearchPaginateModel,
 } from '@chronicstone/mongoose-search';
+import { GoogleMapsService } from '@modules/services/google-maps/google-maps.service';
 
 @Injectable()
 export class RestaurantService {
@@ -17,6 +18,7 @@ export class RestaurantService {
     @InjectModel(Restaurant.name)
     private readonly restaurantPaginatedModel: SearchPaginateModel<RestaurantDocument>,
     private readonly searchService: MongooseSearchService,
+    private readonly googleMapsService: GoogleMapsService,
   ) {}
 
   createOrganizationRestaurants(organizationId: string, restaurants: BaseRestaurant[]) {
@@ -71,5 +73,19 @@ export class RestaurantService {
       },
     ];
     return this.searchService.search(this.restaurantPaginatedModel, query, lookup, count);
+  }
+
+  async manuallyInsertRestaurant(organizationId: string, placeId: string) {
+    const restaurant = await this.googleMapsService.getRestaurantData(placeId);
+    return this.createOrganizationRestaurants(organizationId, [restaurant]);
+  }
+
+  async toggleRestaurant(restaurantId: string) {
+    const restaurant = await this.restaurantModel.findById(restaurantId);
+    if (!restaurant) throw new NotFoundException('Restaurant not found');
+
+    restaurant.disabled = !restaurant.disabled;
+    restaurant.markModified('disabled');
+    return restaurant.save();
   }
 }

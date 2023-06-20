@@ -6,6 +6,7 @@ import { RestaurantController } from './restaurant.controller';
 import { RestaurantService } from './restaurant.service';
 import { Restaurant, RestaurantSchema } from '@schemas/restaurant.schema';
 import { Organization, OrganizationSchema } from '@schemas/oraganization.schema';
+import { GoogleMapsModule } from '@modules/services/google-maps/google-maps.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { Organization, OrganizationSchema } from '@schemas/oraganization.schema'
     ]),
     MongooseSearchModule.register(),
     forwardRef(() => AuthModule),
+    forwardRef(() => GoogleMapsModule),
   ],
   controllers: [RestaurantController],
   providers: [RestaurantService],

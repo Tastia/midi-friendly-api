@@ -54,6 +54,9 @@ export class Restaurant {
 
   @Prop()
   types: string[];
+
+  @Prop({ default: false })
+  disabled: boolean;
 }
 
 const RestaurantSchema = SchemaFactory.createForClass(Restaurant);

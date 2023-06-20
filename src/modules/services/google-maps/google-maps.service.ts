@@ -2,7 +2,7 @@ import { S3Service } from './../aws/s3/s3.service';
 import { BaseRestaurant } from '@common/types/restaurant';
 import { Coordinates } from '@common/types/address';
 import { Address } from '@common/types/address';
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { AddressType, Client, Place, PlacePhoto } from '@googlemaps/google-maps-services-js';
 import { rateLimitPromiseQueue } from '@shared/utils/rate-limit-promise-queue';
 
@@ -353,6 +353,8 @@ export class GoogleMapsService {
         key: process.env.GOOGLE_MAPS_API_KEY,
       },
     }).then((data) => data.data.result);
+
+    if (!placeData) throw new NotFoundException('Restaurant not found');
 
     return this.mapRestaurantFullData(placeData);
   }
